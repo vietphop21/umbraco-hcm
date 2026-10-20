@@ -1,0 +1,302 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "Master.cshtml";
+    var home = Model;
+    var learn = home.Picked("learnSection");
+    var thought = home.Picked("thoughtSection");
+    var videos = home.Picked("videoSection");
+    var museum = home.Picked("museumSection");
+    var news = home.Picked("newsSection");
+    var photos = home.Picked("photoSection");
+    var audios = home.Picked("audioSection");
+    var mega = home.Picked("megastorySection");
+    var info = home.Picked("infographicSection");
+    var world = home.Picked("worldSection");
+
+    var ticker = home.Items(10).ToList();
+    var ads = (home.Value<IEnumerable<IPublishedContent>>("adBanners") ?? Enumerable.Empty<IPublishedContent>()).ToList();
+    var wideBanner = home.Value<IPublishedContent>("wideBanner");
+    var wideLink = home.Value<IPublishedContent>("wideBannerLink");
+    var pages = home.Children().Where(x => x.ContentType.Alias is "textPage" or "sitemapPage").ToList();
+}
+@functions {
+    IHtmlContent Title(IPublishedContent? section, string? text = null)
+        => new HtmlString(section == null ? "" :
+            $"<h2 class=\"sec-title\"><a href=\"{section.Url()}\">{System.Net.WebUtility.HtmlEncode(text ?? section.Name)}</a></h2>");
+
+    IHtmlContent Thumb(IPublishedContent x, int w, int h, string? icon = null)
+    {
+        var img = x.Img(w, h);
+        var inner = img != null
+            ? $"<img src=\"{img}\" alt=\"{System.Net.WebUtility.HtmlEncode(x.Name)}\" loading=\"lazy\" />"
+            : "<span class=\"noimg\"><i class=\"fa fa-image\"></i></span>";
+        if (icon != null) inner += $"<span class=\"ico\"><i class=\"fa {icon}\"></i></span>";
+        return new HtmlString($"<a class=\"thumb\" href=\"{x.Url()}\">{inner}</a>");
+    }
+
+    static string? IconFor(IPublishedContent x) => x.ContentType.Alias switch
+    {
+        "videoItem" => "fa-play",
+        "photoAlbum" => "fa-camera",
+        "audioItem" => "fa-microphone",
+        _ => null
+    };
+}
+
+@* ---- Thanh ngày giờ + tin chạy ---- *@
+<div class="container datebar">
+    <div class="date-box"><i class="fa-regular fa-calendar"></i> <span id="clock"></span></div>
+    <div class="ticker">
+        <div class="ticker-move">
+            @foreach (var t in ticker.Concat(ticker)) { <a href="@t.Url()"><i class="fa fa-star"></i> @t.Name</a> }
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    @* ================= HÀNG 1: Học & làm theo | Tư tưởng | Video ================= *@
+    <div class="row-1">
+        @if (learn != null)
+        {
+            <section class="col-learn">
+                @Title(learn)
+                @foreach (var x in learn.Items(3))
+                {
+                    <article class="item-v">
+                        @Thumb(x, 400, 250)
+                        <h3><a href="@x.Url()">@x.Name</a></h3>
+                    </article>
+                }
+            </section>
+        }
+
+        @if (thought != null)
+        {
+            var items = thought.Items(3).ToList();
+            <section class="col-thought">
+                @Title(thought)
+                @if (items.Any())
+                {
+                    var f = items[0];
+                    <article class="item-feature">
+                        @Thumb(f, 900, 560)
+                        <h3><a href="@f.Url()">@f.Name</a></h3>
+                        <p class="sapo">@f.Value("summary")</p>
+                    </article>
+                }
+                <div class="thought-links">
+                    @foreach (var x in items.Skip(1)) { <a href="@x.Url()">@x.Name</a> }
+                </div>
+            </section>
+        }
+
+        @if (videos != null)
+        {
+            var items = videos.Items(5).ToList();
+            <section class="col-video">
+                @Title(videos)
+                @if (items.Any())
+                {
+                    var f = items[0];
+                    <article class="item-v">
+                        @Thumb(f, 480, 300, "fa-play")
+                        <h3><a href="@f.Url()">@f.Name</a></h3>
+                    </article>
+                }
+                @foreach (var x in items.Skip(1))
+                {
+                    <article class="item-h">
+                        @Thumb(x, 200, 125, "fa-play")
+                        <h3><a href="@x.Url()">@x.Name</a></h3>
+                    </article>
+                }
+            </section>
+        }
+    </div>
+
+    @* ================= HÀNG 2: (Bảo tàng 3D, banner, Tin tức) | (Banner, Ảnh, Audio) ================= *@
+    <div class="row-2">
+        <div class="main-col">
+            @if (museum != null)
+            {
+                <section class="sec">
+                    @Title(museum)
+                    <div class="carousel" data-carousel>
+                        <button class="car-nav prev" aria-label="Trước"><i class="fa fa-angle-left"></i></button>
+                        <div class="car-track">
+                            @foreach (var x in museum.Children())
+                            {
+                                var img = x.Img(480, 300);
+                                <a class="museum-item" href="@(x.Value<string>("link") ?? "#")" target="_blank" rel="noopener">
+                                    <span class="thumb">
+                                        @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-landmark"></i></span> }
+                                        <span class="ico ico-c"><i class="fa fa-play"></i></span>
+                                    </span>
+                                    <span class="cap">@x.Name</span>
+                                </a>
+                            }
+                        </div>
+                        <button class="car-nav next" aria-label="Sau"><i class="fa fa-angle-right"></i></button>
+                    </div>
+                </section>
+            }
+
+            <a class="wide-banner" href="@(wideLink?.Url() ?? "#")">
+                @if (wideBanner != null) { <img src="@wideBanner.GetCropUrl(width: 1200)" alt="" /> }
+                else
+                {
+                    <span class="wb-default">
+                        <span class="wb-script">@home.Value("siteName")</span>
+                        <span class="wb-sub">@(wideLink?.Name ?? "Biên niên tiểu sử")</span>
+                    </span>
+                }
+            </a>
+
+            @if (news != null)
+            {
+                var items = news.Items(5).ToList();
+                <section class="sec">
+                    @Title(news)
+                    <div class="news-grid">
+                        @if (items.Any())
+                        {
+                            var f = items[0];
+                            <article class="news-big">
+                                @Thumb(f, 760, 600)
+                                <h3><a href="@f.Url()">@f.Name</a></h3>
+                                <p class="sapo">@f.Value("summary")</p>
+                                <time>@f.Date().ToString("dd/MM/yyyy")</time>
+                            </article>
+                        }
+                        <div class="news-list">
+                            @foreach (var x in items.Skip(1))
+                            {
+                                <article>
+                                    <h3><a href="@x.Url()">@x.Name</a></h3>
+                                    <p class="sapo">@x.Value("summary")</p>
+                                    <time>@x.Date().ToString("dd/MM/yyyy")</time>
+                                </article>
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+        </div>
+
+        <aside class="side-col">
+            <div class="promo">
+                @if (ads.Any())
+                {
+                    foreach (var a in ads) { <img src="@a.GetCropUrl(width: 600)" alt="" loading="lazy" /> }
+                }
+                else
+                {
+                    foreach (var p in pages.Take(2))
+                    {
+                        <a class="promo-box" href="@p.Url()">
+                            <i class="fa @(p.ContentType.Alias == "sitemapPage" ? "fa-sitemap" : "fa-landmark-flag")"></i>
+                            <span>@p.Name</span>
+                        </a>
+                    }
+                }
+            </div>
+
+            @if (photos != null)
+            {
+                <section class="sec">
+                    @Title(photos)
+                    @foreach (var x in photos.Items(3))
+                    {
+                        <article class="item-h">
+                            @Thumb(x, 200, 125, "fa-camera")
+                            <h3><a href="@x.Url()">@x.Name</a></h3>
+                        </article>
+                    }
+                </section>
+            }
+
+            @if (audios != null)
+            {
+                <section class="sec">
+                    @Title(audios)
+                    <ul class="audio-list">
+                        @foreach (var x in audios.Items(5))
+                        {
+                            <li><span class="mic"><i class="fa fa-microphone"></i></span><a href="@x.Url()">@x.Name</a></li>
+                        }
+                    </ul>
+                </section>
+            }
+        </aside>
+    </div>
+</div>
+
+@* ================= MULTIMEDIA ================= *@
+@{
+    var tabs = new (string Name, string Icon, IPublishedContent? Src)[]
+    {
+        ("Video", "fa-circle-play", videos), ("Photos", "fa-image", photos),
+        ("Megastory", "fa-book-open", mega), ("Infographics", "fa-chart-pie", info),
+    }.Where(t => t.Src != null).ToList();
+}
+@if (tabs.Any())
+{
+    <section class="multimedia">
+        <div class="container">
+            <div class="mm-head">
+                <h2 class="sec-title">Multimedia</h2>
+                <div class="tabs">
+                    @for (var i = 0; i < tabs.Count; i++)
+                    {
+                        <button class="tab @(i == 0 ? "active" : "")" data-tab="mm-@i"><i class="fa @tabs[i].Icon"></i> @tabs[i].Name</button>
+                    }
+                </div>
+            </div>
+            @for (var i = 0; i < tabs.Count; i++)
+            {
+                var items = tabs[i].Src!.Items(5).ToList();
+                <div class="tab-pane @(i == 0 ? "active" : "")" id="mm-@i">
+                    <div class="mm-grid">
+                        <div class="mm-list">
+                            @foreach (var x in items.Skip(1))
+                            {
+                                <article class="item-h">
+                                    @Thumb(x, 200, 125, IconFor(x))
+                                    <h3><a href="@x.Url()">@x.Name</a></h3>
+                                </article>
+                            }
+                        </div>
+                        @if (items.Any())
+                        {
+                            var f = items[0];
+                            var img = f.Img(900, 560);
+                            <a class="mm-big" href="@f.Url()">
+                                @if (img != null) { <img src="@img" alt="@f.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
+                                <span class="mm-cap">@f.Name</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@* ================= HỒ CHÍ MINH VÀ THẾ GIỚI ================= *@
+@if (world != null)
+{
+    <div class="container">
+        <section class="sec">
+            @Title(world)
+            <div class="grid4">
+                @foreach (var x in world.Items(4))
+                {
+                    <article class="item-v">
+                        @Thumb(x, 400, 260)
+                        <h3><a href="@x.Url()">@x.Name</a></h3>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+}

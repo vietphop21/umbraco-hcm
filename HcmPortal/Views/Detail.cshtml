@@ -1,0 +1,73 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "Master.cshtml";
+    var type = Model.ContentType.Alias;
+    var related = Model.Parent?.Items(7).Where(x => x.Id != Model.Id).Take(6).ToList() ?? new();
+    var latest = Model.Root().Items(8).Where(x => x.Id != Model.Id).ToList();
+    var youtube = SiteHelpers.YoutubeEmbed(Model.Value<string>("youtubeUrl"));
+    var videoFile = Model.Value<IPublishedContent>("videoFile")?.Url();
+    var audioFile = Model.Value<IPublishedContent>("audioFile")?.Url();
+    var photos = Model.Value<IEnumerable<IPublishedContent>>("photos") ?? Enumerable.Empty<IPublishedContent>();
+}
+<div class="container">
+    <partial name="Site/Breadcrumb" />
+    <div class="two-col">
+        <article class="detail">
+            <h1>@Model.Name</h1>
+            <div class="meta"><time><i class="fa fa-clock"></i> @Model.DateText()</time></div>
+            @if (Model.HasValue("summary")) { <p class="detail-sapo">@Model.Value("summary")</p> }
+
+            @if (type == "videoItem")
+            {
+                <div class="player">
+                    @if (youtube != null) { <iframe src="@youtube" allowfullscreen allow="autoplay; encrypted-media"></iframe> }
+                    else if (videoFile != null) { <video controls preload="metadata" poster="@Model.Img(960, 540)" src="@videoFile"></video> }
+                    else
+                    {
+                        <div class="player-empty">
+                            @if (Model.Img(960, 540) is string poster) { <img src="@poster" alt="" /> }
+                            <span><i class="fa fa-circle-play"></i>Video đang được cập nhật</span>
+                        </div>
+                    }
+                </div>
+            }
+            @if (type == "audioItem" && audioFile != null)
+            {
+                <audio class="audio-player" controls preload="metadata" src="@audioFile"></audio>
+            }
+            @if (type == "photoAlbum" && photos.Any())
+            {
+                <div class="grid g3 album">
+                    @foreach (var p in photos)
+                    {
+                        <a class="glightbox" data-gallery="album" href="@p.GetCropUrl(width: 1600)">
+                            <img src="@p.GetCropUrl(width: 480, height: 320, imageCropMode: ImageCropMode.Crop)" alt="@p.Name" loading="lazy" />
+                        </a>
+                    }
+                </div>
+            }
+
+            <div class="detail-body">@Model.Value("bodyText")</div>
+            @if (Model.HasValue("source")) { <p class="source">Nguồn: <strong>@Model.Value("source")</strong></p> }
+
+            @if (related.Any())
+            {
+                <div class="sec-head" style="margin-top:30px"><h2><span>Bài liên quan</span></h2></div>
+                <div class="grid g3">
+                    @foreach (var x in related)
+                    {
+                        <partial name="Site/Card" model="x" view-data='new ViewDataDictionary(ViewData) { ["w"] = 400, ["h"] = 250 }' />
+                    }
+                </div>
+            }
+        </article>
+        <aside class="sidebar">
+            <div class="side-box">
+                <h3>Tin mới nhất</h3>
+                <ul class="list-date">
+                    @foreach (var x in latest) { <li><a href="@x.Url()">@x.Name</a><time>@x.DateText()</time></li> }
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>

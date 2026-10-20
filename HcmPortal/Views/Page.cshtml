@@ -1,0 +1,45 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@using HcmPortal.Controllers
+@{
+    Layout = "Master.cshtml";
+    var latest = Model.Root().Items(8).ToList();
+}
+<div class="container">
+    <partial name="Site/Breadcrumb" />
+    <div class="two-col">
+        <article class="detail">
+            <h1>@Model.Name</h1>
+            <div class="detail-body">@Model.Value("bodyText")</div>
+
+            @if (Model.Value<bool>("showContactForm"))
+            {
+                if (TempData["contactOk"] != null)
+                {
+                    <div class="alert ok"><i class="fa fa-circle-check"></i> Cảm ơn bạn! Thư đã được gửi tới ban biên tập.</div>
+                }
+                else
+                {
+                    if (TempData["contactError"] is string err) { <div class="alert err">@err</div> }
+                    using (Html.BeginUmbracoForm<ContactController>(nameof(ContactController.Submit), null, new { @class = "contact-form" }))
+                    {
+                        <div class="row2">
+                            <label>Họ và tên *<input name="Name" required maxlength="100" /></label>
+                            <label>Email *<input name="Email" type="email" required maxlength="100" /></label>
+                        </div>
+                        <label>Số điện thoại<input name="Phone" maxlength="20" /></label>
+                        <label>Nội dung *<textarea name="Message" rows="6" required maxlength="4000"></textarea></label>
+                        <button type="submit"><i class="fa fa-paper-plane"></i> Gửi liên hệ</button>
+                    }
+                }
+            }
+        </article>
+        <aside class="sidebar">
+            <div class="side-box">
+                <h3>Tin mới nhất</h3>
+                <ul class="list-date">
+                    @foreach (var x in latest) { <li><a href="@x.Url()">@x.Name</a><time>@x.DateText()</time></li> }
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>

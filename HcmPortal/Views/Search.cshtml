@@ -1,0 +1,38 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "Master.cshtml";
+    const int pageSize = 20;
+    var q = Context.Request.Query["q"].ToString().Trim();
+    int.TryParse(Context.Request.Query["page"], out var page);
+    page = Math.Max(1, page);
+    var all = q.Length > 0 ? Model.Root().Search(q) : new List<IPublishedContent>();
+    var totalPages = (int)Math.Ceiling(all.Count / (double)pageSize);
+    var results = all.Skip((page - 1) * pageSize).Take(pageSize);
+}
+<div class="container">
+    <partial name="Site/Breadcrumb" />
+    <div class="cat-head"><h1>Tìm kiếm</h1></div>
+    <form class="search-big" method="get">
+        <input type="search" name="q" value="@q" placeholder="Nhập từ khóa (có dấu hoặc không dấu)..." />
+        <button type="submit"><i class="fa fa-search"></i> Tìm</button>
+    </form>
+    @if (q.Length > 0)
+    {
+        <p>Tìm thấy <strong>@all.Count</strong> kết quả cho "<strong>@q</strong>"</p>
+        <div class="list-cards">
+            @foreach (var x in results)
+            {
+                <partial name="Site/Card" model="x" view-data='new ViewDataDictionary(ViewData) { ["w"] = 320, ["h"] = 200, ["summary"] = true, ["date"] = true, ["cls"] = "card-h" }' />
+            }
+        </div>
+        @if (totalPages > 1)
+        {
+            <nav class="pager">
+                @for (var p = 1; p <= totalPages; p++)
+                {
+                    <a class="@(p == page ? "active" : "")" href="?q=@Uri.EscapeDataString(q)&page=@p">@p</a>
+                }
+            </nav>
+        }
+    }
+</div>
