@@ -1,3 +1,7 @@
+// Khai báo rõ để build được cả khi host restore không sinh global using của Umbraco (vd. Railpack)
+using Umbraco.Cms.Core.DependencyInjection;
+using Umbraco.Extensions;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.CreateUmbracoBuilder()
