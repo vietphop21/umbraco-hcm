@@ -45,3 +45,17 @@
     // Lightbox album ảnh
     if (window.GLightbox) GLightbox({ selector: '.glightbox' });
 })();
+
+// Đổi cỡ chữ bài viết (A- A A+)
+(function () {
+    var body = document.getElementById('detail-body');
+    if (!body) return;
+    var base = 15, size = base;
+    document.querySelectorAll('[data-font]').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var v = +b.dataset.font;
+            size = v === 0 ? base : Math.min(22, Math.max(12, size + v));
+            body.style.fontSize = size + 'px';
+        });
+    });
+})();

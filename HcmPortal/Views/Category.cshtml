@@ -1,78 +1,71 @@
 ﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "Master.cshtml";
-    const int pageSize = 15;
+    const int pageSize = 12;
     int.TryParse(Context.Request.Query["page"], out var page);
-    page = Math.Max(1, page);
 
     var isMuseum = Model.Children().Any(x => x.ContentType.Alias == "museumItem");
     var all = Model.Items().ToList();
-    var totalPages = (int)Math.Ceiling(all.Count / (double)pageSize);
+    var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)pageSize));
+    page = Math.Clamp(page, 1, totalPages);
     var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
     var subs = Model.MenuChildren().ToList();
-    var latest = Model.Root().Items(8).ToList();
-
-    ViewDataDictionary Opt(int w, int h, bool summary = false, string cls = "")
-        => new(ViewData) { ["w"] = w, ["h"] = h, ["summary"] = summary, ["date"] = true, ["cls"] = cls };
 }
-<div class="container">
-    <partial name="Site/Breadcrumb" />
-
-    <div class="cat-head">
-        <h1>@Model.Name</h1>
-        @if (subs.Any())
-        {
-            <ul class="cat-subs">
-                @foreach (var s in subs) { <li><a href="@s.Url()">@s.Name</a></li> }
-            </ul>
-        }
-    </div>
-    @if (Model.HasValue("description")) { <p class="cat-desc">@Model.Value("description")</p> }
-
-    @if (isMuseum)
-    {
-        <div class="grid g4 museum">
-            @foreach (var x in Model.Children())
-            {
-                var img = x.Img(480, 270);
-                <a class="museum-tile" href="@(x.Value<string>("link") ?? "#")" target="_blank" rel="noopener">
-                    @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-landmark"></i></span> }
-                    <span class="cap">@x.Name</span>
-                </a>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="two-col">
-            <div>
-                @if (page == 1 && items.Any())
+<div class="container page-wrap">
+    <div class="two-col">
+        <div class="main-list">
+            <div class="cat-head">
+                <h1 class="sec-title line"><a href="@Model.Url()">@Model.Name</a></h1>
+                @if (subs.Any())
                 {
-                    <partial name="Site/Card" model="items[0]" view-data='Opt(860, 480, summary: true, cls: "card-big")' />
-                    items = items.Skip(1).ToList();
-                }
-                <div class="list-cards">
-                    @foreach (var x in items) { <partial name="Site/Card" model="x" view-data='Opt(320, 200, summary: true, cls: "card-h")' /> }
-                </div>
-                @if (!all.Any()) { <p class="empty">Chưa có bài viết.</p> }
-                @if (totalPages > 1)
-                {
-                    <nav class="pager">
-                        @for (var p = 1; p <= totalPages; p++)
-                        {
-                            <a class="@(p == page ? "active" : "")" href="?page=@p">@p</a>
-                        }
-                    </nav>
+                    <ul class="cat-subs">
+                        @foreach (var s in subs) { <li><a href="@s.Url()">@s.Name</a></li> }
+                    </ul>
                 }
             </div>
-            <aside class="sidebar">
-                <div class="side-box">
-                    <h3>Tin mới nhất</h3>
-                    <ul class="list-date">
-                        @foreach (var x in latest) { <li><a href="@x.Url()">@x.Name</a><time>@x.DateText()</time></li> }
-                    </ul>
+            @if (Model.HasValue("description")) { <p class="cat-desc">@Model.Value("description")</p> }
+
+            @if (isMuseum)
+            {
+                <div class="grid g3">
+                    @foreach (var x in Model.Children())
+                    {
+                        var img = x.Img(480, 300);
+                        <a class="museum-item" href="@(x.Value<string>("link") ?? "#")" target="_blank" rel="noopener">
+                            <span class="thumb">
+                                @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-landmark"></i></span> }
+                                <span class="ico"><i class="fa fa-play"></i></span>
+                            </span>
+                            <span class="cap">@x.Name</span>
+                        </a>
+                    }
                 </div>
-            </aside>
+            }
+            else
+            {
+                @foreach (var x in items)
+                {
+                    var img = x.Img(360, 240);
+                    var icon = x.ContentType.Alias switch { "videoItem" => "fa-play", "photoAlbum" => "fa-camera", "audioItem" => "fa-volume-high", _ => null };
+                    <article class="list-item">
+                        <h3><a href="@x.Url()">@x.Name</a></h3>
+                        <div class="list-row">
+                            <a class="thumb" href="@x.Url()">
+                                @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
+                                @if (icon != null) { <span class="ico"><i class="fa @icon"></i></span> }
+                            </a>
+                            <div class="list-text">
+                                <time>@x.DateText()</time>
+                                <p class="sapo">@x.Value("summary")</p>
+                                <a class="more" href="@x.Url()">Xem chi tiết »</a>
+                            </div>
+                        </div>
+                    </article>
+                }
+                @if (!all.Any()) { <p class="empty">Chuyên mục chưa có bài viết.</p> }
+                <partial name="Site/Pager" model="(page, totalPages, string.Empty)" />
+            }
         </div>
-    }
+        <partial name="Site/Sidebar" />
+    </div>
 </div>

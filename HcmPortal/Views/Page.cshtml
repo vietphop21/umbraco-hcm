@@ -4,11 +4,10 @@
     Layout = "Master.cshtml";
     var latest = Model.Root().Items(8).ToList();
 }
-<div class="container">
-    <partial name="Site/Breadcrumb" />
+<div class="container page-wrap">
     <div class="two-col">
         <article class="detail">
-            <h1>@Model.Name</h1>
+            <h1 class="sec-title line">@Model.Name</h1>
             <div class="detail-body">@Model.Value("bodyText")</div>
 
             @if (Model.Value<bool>("showContactForm"))
@@ -33,13 +32,6 @@
                 }
             }
         </article>
-        <aside class="sidebar">
-            <div class="side-box">
-                <h3>Tin mới nhất</h3>
-                <ul class="list-date">
-                    @foreach (var x in latest) { <li><a href="@x.Url()">@x.Name</a><time>@x.DateText()</time></li> }
-                </ul>
-            </div>
-        </aside>
+        <partial name="Site/Sidebar" />
     </div>
 </div>

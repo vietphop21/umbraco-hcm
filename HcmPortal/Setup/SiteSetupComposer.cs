@@ -16,16 +16,22 @@ namespace HcmPortal.Setup;
 public class SiteSetupComposer : IComposer
 {
     public void Compose(IUmbracoBuilder builder)
-        => builder.AddNotificationHandler<UmbracoApplicationStartedNotification, SiteSetupHandler>();
+    {
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, SiteSetupHandler>();
+        // Lần chạy đầu: Umbraco tự cài xong mới bắn notification này -> tạo dữ liệu ngay, không cần chạy lại
+        builder.AddNotificationHandler<UnattendedInstallNotification, SiteSetupHandler>();
+    }
 }
 
 /// <summary>
 /// Tạo Document Types, Templates và nội dung demo.
 /// Khi tăng <see cref="SeedVersion"/>, toàn bộ nội dung + media demo được xoá và tạo lại.
 /// </summary>
-public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNotification>
+public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNotification>,
+    INotificationHandler<UnattendedInstallNotification>
 {
-    private const int SeedVersion = 2;
+    private const int SeedVersion = 5;
+    private static int _done;
 
     private readonly IContentTypeService _contentTypes;
     private readonly IDataTypeService _dataTypes;
@@ -59,9 +65,16 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         _logger = logger;
     }
 
+    public void Handle(UnattendedInstallNotification notification) => Run();
+
     public void Handle(UmbracoApplicationStartedNotification notification)
     {
-        if (_runtime.Level != RuntimeLevel.Run) return;
+        if (_runtime.Level == RuntimeLevel.Run) Run();
+    }
+
+    private void Run()
+    {
+        if (Interlocked.Exchange(ref _done, 1) == 1) return;
 
         try
         {
@@ -80,6 +93,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         }
         catch (Exception ex)
         {
+            _done = 0;
             _logger.LogError(ex, "Không thể khởi tạo cấu trúc website");
         }
     }
@@ -233,31 +247,97 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
     private readonly List<IMedia> _pool = new();
     private int _poolIndex;
 
-    /// <summary>Tải ảnh minh họa miễn phí (Lorem Picsum / Unsplash license) vào thư mục Media.</summary>
-    private void BuildImagePool(int count)
+    private readonly Dictionary<Guid, string> _credits = new();
+
+    private record CommonsImage(string title, string url, string page, string license, string author);
+
+    /// <summary>
+    /// Tải ảnh di tích có giấy phép tự do (Wikimedia Commons, danh sách trong Setup/commons-images.json)
+    /// vào Media, ghi lại tác giả + giấy phép để hiển thị nguồn. Nếu không tải được thì dùng ảnh Lorem Picsum.
+    /// </summary>
+    private void BuildImagePool()
     {
         var folder = _media.CreateMedia("Ảnh minh họa (demo)", Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
         _media.Save(folder);
 
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-        var downloads = Enumerable.Range(1, count).AsParallel().WithDegreeOfParallelism(8).Select(i =>
+        var listFile = Path.Combine(_env.ContentRootPath, "Setup", "commons-images.json");
+        var list = System.IO.File.Exists(listFile)
+            ? JsonSerializer.Deserialize<List<CommonsImage>>(System.IO.File.ReadAllText(listFile)) ?? new()
+            : new();
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("HcmPortalDemo/1.0 (Umbraco demo seeding)");
+
+        var downloads = list.Select((img, i) => (img, i)).AsParallel().WithDegreeOfParallelism(4).Select(x =>
         {
-            try { return (i, data: http.GetByteArrayAsync($"https://picsum.photos/seed/hcm{i}/1200/750").Result); }
-            catch { return (i, data: (byte[]?)null); }
+            try { return (x.img, x.i, data: http.GetByteArrayAsync(x.img.url).Result); }
+            catch { return (x.img, x.i, data: (byte[]?)null); }
         }).Where(x => x.data != null).OrderBy(x => x.i).ToList();
 
-        foreach (var (i, data) in downloads)
+        foreach (var (img, i, data) in downloads)
         {
-            var m = _media.CreateMedia($"anh-minh-hoa-{i:00}", folder.Id, Constants.Conventions.MediaTypes.Image);
-            using var ms = new MemoryStream(data!);
-            m.SetValue(_mediaFiles, _urlGenerators, _sh, _typeProvider, Constants.Conventions.Media.File, $"anh-minh-hoa-{i:00}.jpg", ms);
-            _media.Save(m);
-            _pool.Add(m);
+            var name = Path.GetFileNameWithoutExtension(img.title.Replace("File:", ""));
+            var credit = $"Ảnh: {(string.IsNullOrWhiteSpace(img.author) ? "Không rõ tác giả" : img.author)} / Wikimedia Commons ({img.license})";
+            AddMedia(folder.Id, name, data!, credit);
+        }
+
+        if (_pool.Count < 10)
+        {
+            var fallback = Enumerable.Range(1, 40).AsParallel().WithDegreeOfParallelism(8).Select(i =>
+            {
+                try { return (i, data: http.GetByteArrayAsync($"https://picsum.photos/seed/hcm{i}/1200/750").Result); }
+                catch { return (i, data: (byte[]?)null); }
+            }).Where(x => x.data != null).OrderBy(x => x.i).ToList();
+            foreach (var (i, data) in fallback) AddMedia(folder.Id, $"anh-minh-hoa-{i:00}", data!, "Ảnh minh họa: Lorem Picsum (Unsplash License)");
         }
         _logger.LogInformation("Đã tải {Count} ảnh minh họa", _pool.Count);
     }
 
+    private void AddMedia(int folderId, string name, byte[] data, string credit)
+    {
+        var m = _media.CreateMedia(name, folderId, Constants.Conventions.MediaTypes.Image);
+        using var ms = new MemoryStream(data);
+        m.SetValue(_mediaFiles, _urlGenerators, _sh, _typeProvider, Constants.Conventions.Media.File, _sh.CleanStringForSafeFileName(name) + ".jpg", ms);
+        _media.Save(m);
+        _pool.Add(m);
+        _credits[m.Key] = credit;
+    }
+
+    private readonly List<IMedia> _videos = new();
+    private readonly List<IMedia> _audios = new();
+
+    /// <summary>Đưa video/mp3 test (Setup/demo-media, tự tạo bằng ffmpeg) vào Media để gắn cho bài Video/Audio.</summary>
+    private void BuildAvPool()
+    {
+        var dir = Path.Combine(_env.ContentRootPath, "Setup", "demo-media");
+        if (!Directory.Exists(dir)) return;
+        var folder = _media.CreateMedia("Video & Audio (demo)", Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+        _media.Save(folder);
+
+        foreach (var file in Directory.GetFiles(dir).OrderBy(f => f))
+        {
+            var ext = Path.GetExtension(file).ToLowerInvariant();
+            var type = ext == ".mp4" ? "umbracoMediaVideo"
+                : ext == ".mp3" ? "umbracoMediaAudio" : null;
+            if (type == null) continue;
+            var m = _media.CreateMedia(Path.GetFileNameWithoutExtension(file), folder.Id, type);
+            using (var fs = System.IO.File.OpenRead(file))
+                m.SetValue(_mediaFiles, _urlGenerators, _sh, _typeProvider, Constants.Conventions.Media.File, Path.GetFileName(file), fs);
+            _media.Save(m);
+            (ext == ".mp4" ? _videos : _audios).Add(m);
+        }
+        _logger.LogInformation("Đã nạp {V} video, {A} audio demo", _videos.Count, _audios.Count);
+    }
+
     private IMedia? NextImage() => _pool.Count == 0 ? null : _pool[_poolIndex++ % _pool.Count];
+
+    private IMedia? FindImage(string keyword)
+        => _pool.FirstOrDefault(m => m.Name!.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ?? NextImage();
+
+    private string Credit(IMedia? m) => m != null && _credits.TryGetValue(m.Key, out var c) ? c : "";
+
+    private string Figure(IMedia? m)
+        => m == null ? "" : $"<figure><img src=\"{ImgUrl(m)}\" alt=\"{System.Net.WebUtility.HtmlEncode(m.Name)}\" /><figcaption>{System.Net.WebUtility.HtmlEncode(Credit(m))}</figcaption></figure>";
 
     private static string Pick(params IMedia[] media)
         => JsonSerializer.Serialize(media.Select(m => new { key = Guid.NewGuid(), mediaKey = m.Key }));
@@ -275,6 +355,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
     }
 
     private int _hours;
+    private int _avIndex;
 
     private IContent Create(string name, IContent parent, string type, Action<IContent>? set = null)
     {
@@ -292,12 +373,29 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
             var img = NextImage();
             Create(title, parent, type, c =>
             {
-                c.SetValue("summary", SeedData.Summary(pool, _rnd));
-                var inline = ImgUrl(NextImage()) ?? "";
-                c.SetValue("bodyText", SeedData.Body(pool, _rnd).Replace("{IMG}", inline));
+                var inlineImg = NextImage();
+                var figure = Figure(inlineImg);
+                string body;
+                if (SeedArticles.Rich.TryGetValue(title, out var rich))
+                {
+                    c.SetValue("summary", rich.Summary);
+                    body = rich.Body.Replace("<p>{FIGURE}</p>", figure);
+                }
+                else
+                {
+                    c.SetValue("summary", SeedData.Summary(pool, _rnd));
+                    body = System.Text.RegularExpressions.Regex.Replace(SeedData.Body(pool, _rnd), "<figure>.*?</figure>", figure);
+                }
+                if (img != null && Credit(img) is { Length: > 0 } cr)
+                    body += $"<p class=\"img-credit\">Ảnh đại diện – {System.Net.WebUtility.HtmlEncode(cr)}</p>";
+                c.SetValue("bodyText", body);
                 c.SetValue("publishDate", DateTime.Now.AddHours(-_hours));
                 c.SetValue("source", SeedData.Sources[_rnd.Next(SeedData.Sources.Length)]);
                 if (img != null) c.SetValue("thumbnail", Pick(img));
+                if (type == "videoItem" && _videos.Count > 0)
+                    c.SetValue("videoFile", Pick(_videos[_avIndex++ % _videos.Count]));
+                if (type == "audioItem" && _audios.Count > 0)
+                    c.SetValue("audioFile", Pick(_audios[_avIndex++ % _audios.Count]));
                 if (type == "photoAlbum" && _pool.Count > 0)
                     c.SetValue("photos", Pick(Enumerable.Range(0, 8).Select(_ => NextImage()!).ToArray()));
             });
@@ -308,7 +406,8 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
 
     private void SeedContent()
     {
-        BuildImagePool(48);
+        BuildImagePool();
+        BuildAvPool();
 
         var home = _content.Create("Trang chủ", Constants.System.Root, "home");
         home.SetValue("siteName", "Hồ Chí Minh");
@@ -321,7 +420,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         _content.SaveAndPublish(home);
 
         var news = Create("Tin tức", home, "category");
-        Items(news, "article", SeedData.News, SeedData.ParagraphsNews);
+        Items(news, "article", SeedData.News.Concat(SeedData.MoreNews(28)).ToArray(), SeedData.ParagraphsNews);
 
         var life = Create("Cuộc đời, sự nghiệp", home, "category");
         Items(Create("Tiểu sử", life, "category"), "article", SeedData.Biography, SeedData.ParagraphsThought);
@@ -330,21 +429,21 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
 
         var thought = Create("Tư tưởng, đạo đức, phong cách Hồ Chí Minh", home, "category");
         Items(Create("Nguồn gốc hình thành", thought, "category"), "article", SeedData.ThoughtOrigin, SeedData.ParagraphsThought);
-        Items(Create("Nội dung tư tưởng đạo đức", thought, "category"), "article", SeedData.ThoughtContent, SeedData.ParagraphsThought);
-        Items(Create("Nghiên cứu", thought, "category"), "article", SeedData.Research, SeedData.ParagraphsThought);
+        Items(Create("Nội dung tư tưởng đạo đức", thought, "category"), "article", SeedData.ThoughtContent.Concat(SeedData.MoreThought(20)).ToArray(), SeedData.ParagraphsThought);
+        Items(Create("Nghiên cứu", thought, "category"), "article", SeedData.Research.Concat(SeedData.MoreThought(40).Skip(20)).ToArray(), SeedData.ParagraphsThought);
 
         var library = Create("Tủ sách điện tử Hồ Chí Minh", home, "category");
         Items(Create("Tác phẩm về Hồ Chí Minh", library, "category"), "article", SeedData.BooksAbout, SeedData.ParagraphsLibrary);
         Items(Create("Tác phẩm của Hồ Chí Minh", library, "category"), "article", SeedData.BooksBy, SeedData.ParagraphsLibrary);
 
         var world = Create("Hồ Chí Minh và thế giới", home, "category");
-        Items(Create("Hoạt động quốc tế", world, "category"), "article", SeedData.WorldActivities, SeedData.ParagraphsWorld);
-        Items(Create("Bạn bè quốc tế", world, "category"), "article", SeedData.WorldFriends, SeedData.ParagraphsWorld);
+        Items(Create("Hoạt động quốc tế", world, "category"), "article", SeedData.WorldActivities.Concat(SeedData.MoreWorld(16)).ToArray(), SeedData.ParagraphsWorld);
+        Items(Create("Bạn bè quốc tế", world, "category"), "article", SeedData.WorldFriends.Concat(SeedData.MoreWorld(32).Skip(16)).ToArray(), SeedData.ParagraphsWorld);
 
         var learn = Create("Học và làm theo Bác", home, "category");
         Items(Create("Di chúc", learn, "category"), "article", SeedData.Testament, SeedData.ParagraphsThought);
         Items(Create("Văn bản", learn, "category"), "article", SeedData.Documents, SeedData.ParagraphsNews);
-        Items(Create("Gương điển hình", learn, "category"), "article", SeedData.Learn, SeedData.ParagraphsLearn);
+        Items(Create("Gương điển hình", learn, "category"), "article", SeedData.Learn.Concat(SeedData.MoreLearn(22)).ToArray(), SeedData.ParagraphsLearn);
 
         IContent Hidden(string name) => Create(name, home, "category", c => c.SetValue("umbracoNaviHide", true));
 
@@ -362,7 +461,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         var museum = Hidden("Bảo tàng 3D");
         foreach (var name in SeedData.Museums)
         {
-            var img = NextImage();
+            var img = FindImage(SeedArticles.MuseumQuery.GetValueOrDefault(name, name));
             Create(name, museum, "museumItem", c =>
             {
                 c.SetValue("link", "#");

@@ -96,6 +96,15 @@
     </nav>
 </header>
 
+<div class="container datebar">
+    <div class="date-box"><i class="fa-regular fa-calendar"></i> <span id="clock"></span></div>
+    <div class="ticker">
+        <div class="ticker-move">
+            @foreach (var t in home.Items(10).ToList() is var tk ? tk.Concat(tk) : null!) { <a href="@t.Url()"><i class="fa fa-star"></i> @t.Name</a> }
+        </div>
+    </div>
+</div>
+
 <main class="site-main">
     @RenderBody()
 </main>

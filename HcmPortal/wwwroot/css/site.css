@@ -268,3 +268,58 @@ time { display: block; color: #9a9a9a; font-size: 12px; margin-top: 6px; }
 @media (max-width: 480px) {
     .grid4, .g3, .g4 { grid-template-columns: 1fr; }
 }
+
+/* ================= TRANG CHUYÊN MỤC / CHI TIẾT (v2) ================= */
+.page-wrap { padding-top: 4px; }
+.page-wrap .two-col { grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; }
+.sec-title.line { border-bottom: 1px solid #e5e5e5; padding-bottom: 8px; margin-bottom: 16px; position: relative; }
+.sec-title.line::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 60px; height: 2px; background: var(--red); }
+.cat-head { border: 0; display: block; margin: 0; }
+.cat-subs { margin: -6px 0 16px; gap: 6px 18px; font-size: 13px; }
+.cat-subs a { color: #555; }
+.cat-subs a:hover { color: var(--red); }
+
+.list-item { padding: 0 0 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.list-item h3 { font-size: 15px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
+.list-row { display: grid; grid-template-columns: 220px 1fr; gap: 16px; }
+.list-row .thumb { aspect-ratio: 3/2; }
+.list-text time { margin: 0 0 4px; }
+.list-text .sapo { -webkit-line-clamp: 4; color: #444; }
+.list-text .more { display: block; text-align: right; color: var(--red); font-size: 12px; margin-top: 8px; }
+
+.pager { justify-content: center; gap: 5px; margin: 26px 0 10px; }
+.pager a, .pager span { min-width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 13px; }
+.pager span { border-color: transparent; }
+.pager a:hover { border-color: var(--red); }
+.pager a.active { background: var(--red); border-color: var(--red); color: #fff; font-weight: 700; }
+
+.side-col .sec-title.line { margin-bottom: 12px; }
+
+.detail-tools { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: -4px 0 12px; }
+.detail-tools time { margin: 0; font-size: 12px; }
+.tools { display: flex; align-items: center; gap: 4px; }
+.tools button, .tools a { border: 0; background: none; cursor: pointer; color: #555; font-size: 13px; padding: 2px 5px; }
+.tools button:hover, .tools a:hover { color: var(--red); }
+.tools .sep { width: 1px; height: 14px; background: #ccc; margin: 0 4px; }
+.detail h1 { font-size: 24px; margin-bottom: 14px; }
+.detail-sapo { font-size: 15px; line-height: 1.6; }
+.detail-body { font-size: 15px; line-height: 1.7; text-align: justify; }
+.detail-body h3 { font-size: 15px; font-weight: 700; margin: 18px 0 8px; }
+.detail-body figure { margin: 18px 0; }
+.detail-body figure img { width: 100%; }
+.detail-body figcaption { text-align: center; font-style: italic; color: #2048a8; font-size: 13.5px; margin-top: 6px; }
+.note-box { background: #fdf6c9; padding: 10px 14px; margin: 0 0 14px; }
+.source { text-align: right; font-weight: 700; }
+.audio-box { display: flex; gap: 16px; align-items: center; background: var(--pink); padding: 14px; margin: 14px 0; }
+.audio-box img { width: 110px; height: 110px; object-fit: cover; }
+.audio-box > div { flex: 1; }
+.audio-box strong { color: var(--red); }
+.related { margin-top: 30px; }
+.related-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.related-list li { padding: 7px 0 7px 14px; position: relative; border-bottom: 1px dashed var(--line); }
+.related-list li::before { content: ""; position: absolute; left: 0; top: 15px; width: 5px; height: 5px; background: var(--red); }
+.related-list time { display: inline; margin: 0; }
+@media (max-width: 991px) { .page-wrap .two-col { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .list-row { grid-template-columns: 1fr; } }
+@media print { .site-header, .site-footer, .side-col, .tools, .related, .to-top { display: none !important; } .two-col { display: block; } }
+.img-credit { font-size: 12px; color: var(--muted); font-style: italic; text-align: right; }

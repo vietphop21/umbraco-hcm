@@ -43,16 +43,6 @@
     };
 }
 
-@* ---- Thanh ngày giờ + tin chạy ---- *@
-<div class="container datebar">
-    <div class="date-box"><i class="fa-regular fa-calendar"></i> <span id="clock"></span></div>
-    <div class="ticker">
-        <div class="ticker-move">
-            @foreach (var t in ticker.Concat(ticker)) { <a href="@t.Url()"><i class="fa fa-star"></i> @t.Name</a> }
-        </div>
-    </div>
-</div>
-
 <div class="container">
     @* ================= HÀNG 1: Học & làm theo | Tư tưởng | Video ================= *@
     <div class="row-1">

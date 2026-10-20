@@ -243,17 +243,89 @@ public static class SeedData
     public static readonly string[] Sources =
         { "Ban biên tập", "Phóng viên", "Theo tư liệu lưu trữ", "Cộng tác viên", "Tổng hợp" };
 
+    // ---------- Sinh thêm tiêu đề để có nhiều trang (ghép từ cụm từ tự viết) ----------
+
+    private static readonly string[] Places =
+    {
+        "tại Hà Nội", "tại Nghệ An", "tại TP. Hồ Chí Minh", "tại Cao Bằng", "tại Thái Nguyên", "tại Tuyên Quang",
+        "tại Thừa Thiên Huế", "tại Đà Nẵng", "tại Cần Thơ", "tại Quảng Ninh", "tại Hải Phòng", "tại Lâm Đồng",
+    };
+
+    private static readonly string[] NewsVerbs =
+        { "Khai mạc", "Tổ chức", "Ra mắt", "Phát động", "Tọa đàm về", "Trưng bày", "Hội thảo khoa học về", "Tổng kết" };
+
+    private static readonly string[] NewsTopics =
+    {
+        "không gian văn hóa Hồ Chí Minh", "chuyên đề học tập năm 2026", "triển lãm tư liệu lịch sử",
+        "cuộc thi tìm hiểu dành cho học sinh", "chương trình “Theo dấu chân Bác”", "hội sách chuyên đề",
+        "tuần lễ văn hóa đọc", "hành trình về nguồn của tuổi trẻ",
+    };
+
+    private static readonly string[] LearnSubjects =
+    {
+        "Người thầy", "Nữ y tá", "Cựu chiến binh", "Chàng kỹ sư trẻ", "Bí thư chi bộ", "Người nông dân",
+        "Nữ công an xã", "Sinh viên tình nguyện", "Doanh nhân trẻ", "Người lính biên phòng",
+    };
+
+    private static readonly string[] LearnDeeds =
+    {
+        "tận tụy với bà con vùng khó", "lặng lẽ làm việc thiện suốt nhiều năm", "sáng tạo trong lao động sản xuất",
+        "gắn bó với vùng biên giới", "giúp dân phát triển kinh tế", "giữ gìn nét đẹp văn hóa truyền thống",
+    };
+
+    private static readonly string[] ThoughtTopics =
+    {
+        "đạo đức cách mạng", "phong cách quần chúng", "tinh thần đoàn kết", "lối sống giản dị",
+        "trách nhiệm nêu gương", "tư tưởng vì dân", "ý chí tự lực tự cường", "tinh thần học tập suốt đời",
+    };
+
+    private static readonly string[] ThoughtFrames =
+    {
+        "Giá trị thời sự của {0}", "Vận dụng {0} trong công tác cán bộ", "Bàn về {0} trong giai đoạn mới",
+        "Giáo dục {0} cho thế hệ trẻ", "{0} – từ lý luận đến thực tiễn",
+    };
+
+    private static readonly string[] WorldFrames =
+    {
+        "Hoạt động tưởng niệm {0}", "Kiều bào tổ chức chương trình hướng về Tổ quốc {0}",
+        "Giới thiệu tư liệu về Chủ tịch Hồ Chí Minh {0}", "Tọa đàm hữu nghị {0}",
+    };
+
+    private static readonly string[] Countries =
+    {
+        "tại Pháp", "tại Nga", "tại Lào", "tại Cuba", "tại Ấn Độ", "tại Thái Lan", "tại Trung Quốc", "tại Mông Cổ",
+    };
+
+    public static string[] MoreNews(int n) => Combine(n, NewsVerbs, NewsTopics, Places, "{0} {1} {2}");
+    public static string[] MoreLearn(int n) => Combine(n, LearnSubjects, LearnDeeds, Places, "{0} {1} {2}");
+    public static string[] MoreThought(int n)
+        => ThoughtFrames.SelectMany(f => ThoughtTopics.Select(t => Cap(string.Format(f, t)))).Take(n).ToArray();
+    public static string[] MoreWorld(int n)
+        => WorldFrames.SelectMany(f => Countries.Select(c => string.Format(f, c))).Take(n).ToArray();
+
+    private static string Cap(string s) => char.ToUpper(s[0]) + s[1..];
+
+    private static string[] Combine(int n, string[] a, string[] b, string[] c, string fmt)
+    {
+        var list = new List<string>();
+        for (var i = 0; list.Count < n && i < a.Length * b.Length; i++)
+            list.Add(string.Format(fmt, a[i % a.Length], b[(i / a.Length + i) % b.Length], c[i % c.Length]));
+        return list.Distinct().ToArray();
+    }
+
     public static string Summary(string[] pool, Random rnd) => pool[rnd.Next(pool.Length)];
 
     public static string Body(string[] pool, Random rnd)
     {
-        var paras = pool.OrderBy(_ => rnd.Next()).Take(Math.Min(5, pool.Length)).ToList();
+        var paras = pool.OrderBy(_ => rnd.Next()).Take(Math.Min(6, pool.Length)).ToList();
         var sb = new System.Text.StringBuilder();
         for (var i = 0; i < paras.Count; i++)
         {
-            if (i == 2) sb.Append($"<h2>{SubHeadings[rnd.Next(SubHeadings.Length)]}</h2>");
+            if (i == 0) sb.Append($"<h3>{SubHeadings[rnd.Next(SubHeadings.Length)]}</h3>");
+            if (i == 3) sb.Append($"<h3>{SubHeadings[rnd.Next(SubHeadings.Length)]}</h3>");
             sb.Append($"<p>{paras[i]}</p>");
-            if (i == 1) sb.Append("<p><img src=\"{IMG}\" alt=\"Ảnh minh họa\" /><em>Ảnh minh họa</em></p>");
+            if (i == 1) sb.Append($"<div class=\"note-box\">{pool[(i + 3) % pool.Length]}</div>");
+            if (i == 2) sb.Append("<figure><img src=\"{IMG}\" alt=\"Ảnh minh họa\" /><figcaption>Ảnh minh họa cho bài viết (ảnh demo).</figcaption></figure>");
         }
         return sb.ToString();
     }
