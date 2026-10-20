@@ -478,3 +478,6 @@ appsettings-schema.*.json
 # Media files
 /wwwroot/media/
 /umbraco/Data/seed-version.txt
+
+# File bien moi truong chua mat khau
+.env
