@@ -357,3 +357,15 @@ h1, h3, .sapo, .card-title { overflow-wrap: anywhere; }
     .search-btn { font-size: 13px; }
     .nav-tools { gap: 6px; padding: 4px 0; }
 }
+
+/* ================= HEADER MOBILE 1 tầng: nút nằm trên banner ================= */
+@media (max-width: 767px) {
+    .site-header { position: relative; }
+    .mainnav { position: absolute; top: 0; left: 0; right: 0; background: transparent; pointer-events: none; }
+    .nav-inner { min-height: 68px; justify-content: flex-end; padding-right: 10px; }
+    .nav-tools { pointer-events: auto; padding: 0; }
+    .nav-btn, .search-btn { background: var(--red); color: #fff; width: 34px; height: 34px; border-radius: 50%; }
+    .banner-center { padding-right: 84px; text-align: left; padding-left: 10px; }
+    .nav-open .menu { pointer-events: auto; top: 68px; z-index: 60; box-shadow: 0 8px 16px rgba(0,0,0,.2); }
+    .search-drop { pointer-events: auto; position: absolute; top: 68px; left: 0; right: 0; z-index: 60; }
+}
