@@ -476,7 +476,7 @@ appsettings-schema.*.json
 /umbraco/Logs/
 
 # Media files
-/wwwroot/media/
+# /wwwroot/media/  (đã bỏ chặn: ảnh được đồng bộ qua git cùng uSync)
 /umbraco/Data/seed-version.txt
 
 # File bien moi truong chua mat khau

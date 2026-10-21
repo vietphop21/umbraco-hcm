@@ -80,6 +80,11 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         {
             EnsureSchema();
 
+            // Nội dung đã được đồng bộ qua uSync -> không seed nữa, tránh xoá/ghi đè nội dung của dev khác
+            var usyncContent = Path.Combine(_env.ContentRootPath, "uSync", "v9", "Content");
+            if (Directory.Exists(usyncContent) && Directory.EnumerateFiles(usyncContent, "*.config", SearchOption.AllDirectories).Any())
+                return;
+
             var versionFile = Path.Combine(_env.ContentRootPath, "umbraco", "Data", "seed-version.txt");
             var current = System.IO.File.Exists(versionFile) && int.TryParse(System.IO.File.ReadAllText(versionFile), out var v) ? v : 0;
             if (current < SeedVersion || !_content.GetRootContent().Any())
