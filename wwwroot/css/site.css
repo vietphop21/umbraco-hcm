@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --red: #db0713;
     --red-dark: #aa050f;
     --gold: #f5c518;
@@ -20,10 +20,10 @@ h1, h2, h3, p { margin: 0; }
 .banner { display: block; }
 .banner img { width: 100%; height: auto; }
 .banner-default { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 120px;
-    background: linear-gradient(90deg, var(--red) 0, var(--red) 14%, #fff7ec 30%, #fffaf3 70%, #fbe7e3 100%); overflow: hidden; }
+    background: linear-gradient(90deg, var(--red) 0, #be0611 18%, #fff5ea 35%, #fffaf3 70%, #fbe7e3 100%); overflow: hidden; }
 .banner-left { padding-left: max(16px, calc((100vw - 1400px) / 2)); }
 .emblem, .banner-left .logo { width: 84px; height: 84px; border-radius: 50%; }
-.emblem { display: grid; place-items: center; background: var(--gold); color: var(--red); font-size: 42px; border: 3px solid #fff3; box-shadow: 0 0 0 6px rgba(255,255,255,.15); }
+.emblem { display: grid; place-items: center; background: radial-gradient(circle at 35% 35%, #ffe66d, var(--gold) 70%, #d49a05 100%); color: var(--red); font-size: 42px; border: 2.5px solid rgba(255,255,255,.5); box-shadow: 0 4px 12px rgba(0,0,0,.15); transition: transform .2s ease; }
 .banner-center { text-align: center; }
 .site-name { display: block; font: 700 54px/1 'Noto Serif', serif; text-transform: uppercase; letter-spacing: 3px;
     color: #e8a915; -webkit-text-stroke: 1.5px var(--red-dark); text-shadow: 2px 2px 0 var(--red-dark); }
@@ -46,6 +46,7 @@ h1, h2, h3, p { margin: 0; }
 .menu .sub .has-sub > a::after { content: "\f105"; font-family: "Font Awesome 6 Free"; font-weight: 900; float: right; }
 .nav-tools { display: flex; gap: 8px; }
 .nav-btn { border: 0; background: transparent; color: #fff; font-size: 17px; width: 36px; height: 36px; cursor: pointer; border-radius: 50%; }
+.menu-toggle-btn { display: none !important; }
 .search-btn { background: #fff; color: var(--red); font-size: 14px; }
 .search-drop { display: none; background: var(--red-dark); padding: 10px 0; }
 .search-open .search-drop { display: block; }
@@ -231,7 +232,6 @@ time { display: block; color: #9a9a9a; font-size: 12px; margin-top: 6px; }
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1100px) {
     .menu > li > a { padding: 14px 7px; font-size: 11.5px; }
-}
 @media (max-width: 991px) {
     .row-1 { grid-template-columns: 1fr 1fr; }
     .col-thought { grid-column: 1 / -1; order: -1; }
@@ -239,11 +239,40 @@ time { display: block; color: #9a9a9a; font-size: 12px; margin-top: 6px; }
     .side-box { position: static; }
     .grid4, .g4 { grid-template-columns: repeat(2, 1fr); }
     .site-name { font-size: 40px; }
-    .menu { display: none; }
-    .nav-open .menu { display: flex; flex-direction: column; position: absolute; left: 0; right: 0; top: 100%; background: var(--red); padding: 6px 0; }
-    .nav-open .menu .sub { position: static; display: block; box-shadow: none; border: 0; background: var(--red-dark); padding-left: 10px; }
-    .nav-open .menu .sub a { color: #fff; }
+    .menu-toggle-btn { display: inline-grid !important; }
+    .menu {
+        display: flex !important;
+        flex-direction: column !important;
+        position: absolute !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: 100% !important;
+        background: var(--red) !important;
+        padding: 0 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transform: translateY(-8px) !important;
+        transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, transform 0.3s ease, visibility 0.35s !important;
+        z-index: 60 !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,.25) !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+    }
+    .nav-open .menu {
+        max-height: 80vh !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) !important;
+        overflow-y: auto !important;
+        padding: 8px 0 20px !important;
+    }
+    .menu .sub { position: static; display: block; box-shadow: none; border: 0; background: var(--red-dark); padding-left: 14px; }
+    .menu .sub a { color: #fff; }
     .nav-inner { min-height: 48px; }
+    .menu > li.home-ico { display: none; }
+}
     .menu > li.home-ico { display: none; }
 }
 @media (max-width: 767px) {
@@ -345,31 +374,65 @@ h1, h3, .sapo, .card-title { overflow-wrap: anywhere; }
     .footer-links select { flex: 1; min-width: 0; }
 }
 
-/* ================= HEADER MOBILE gọn ================= */
+/* ================= HEADER MOBILE ================= */
 @media (max-width: 767px) {
-    .banner-default { height: 68px; background: linear-gradient(90deg, var(--red) 0 62px, #fff7ec 62px); }
-    .banner-left { padding-left: 8px; }
-    .emblem, .banner-left .logo { width: 46px; height: 46px; font-size: 22px; box-shadow: none; }
-    .site-name { font-size: 24px; letter-spacing: 1px; -webkit-text-stroke: 1px var(--red-dark); text-shadow: 1px 1px 0 var(--red-dark); }
-    .slogan { font-size: 13px; margin-top: 2px; }
-    .nav-inner { min-height: 40px; }
-    .nav-btn { width: 32px; height: 32px; font-size: 16px; }
-    .search-btn { font-size: 13px; }
-    .nav-tools { gap: 6px; padding: 4px 0; }
+    .banner-default {
+        display: grid !important;
+        grid-template-columns: 56px 1fr !important;
+        align-items: center !important;
+        height: 68px !important;
+        padding: 0 8px !important;
+        background: linear-gradient(90deg, #db0713 0%, #aa050f 18%, #fbf3e6 30%, #fffdfa 100%) !important;
+        overflow: hidden !important;
+    }
+    .banner-left {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    .emblem, .banner-left .logo {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 22px !important;
+        border: 2px solid rgba(255,255,255,.6) !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,.25) !important;
+    }
+    .banner-right { display: none !important; }
+    .banner-center {
+        text-align: center !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+    }
+    .site-name {
+        font-size: 20px !important;
+        letter-spacing: 1px !important;
+        color: #e8a915 !important;
+        -webkit-text-stroke: 1px var(--red-dark) !important;
+        text-shadow: 1px 1px 0 var(--red-dark) !important;
+        line-height: 1.1 !important;
+    }
+    .slogan {
+        font-size: 11.5px !important;
+        color: var(--red) !important;
+        margin-top: 3px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .mainnav { position: relative !important; background: var(--red) !important; pointer-events: auto !important; }
+    .nav-inner { min-height: 42px !important; justify-content: flex-end !important; padding: 0 10px !important; }
+    .nav-tools { gap: 6px !important; padding: 4px 0 !important; }
+    .nav-btn { width: 32px !important; height: 32px !important; font-size: 16px !important; }
+    .search-btn { font-size: 13px !important; }
+    .search-drop { position: absolute !important; top: 100% !important; left: 0 !important; right: 0 !important; z-index: 60 !important; }
 }
-
-/* ================= HEADER MOBILE 1 tầng: nút nằm trên banner ================= */
-@media (max-width: 767px) {
-    .site-header { position: relative; }
-    .mainnav { position: absolute; top: 0; left: 0; right: 0; background: transparent; pointer-events: none; }
-    .nav-inner { min-height: 68px; justify-content: flex-end; padding-right: 10px; }
-    .nav-tools { pointer-events: auto; padding: 0; }
-    .nav-btn, .search-btn { background: var(--red); color: #fff; width: 34px; height: 34px; border-radius: 50%; }
-    .banner-center { padding-right: 84px; text-align: left; padding-left: 10px; }
-    .nav-open .menu { pointer-events: auto; top: 68px; z-index: 60; box-shadow: 0 8px 16px rgba(0,0,0,.2); }
-    .search-drop { pointer-events: auto; position: absolute; top: 68px; left: 0; right: 0; z-index: 60; }
+[data-theme="dark"] .banner-default {
+    background: linear-gradient(90deg, #db0713 0%, #aa050f 18%, #251b18 30%, #151518 100%) !important;
 }
-
+[data-theme="dark"] .slogan {
+    color: #ff6b6b !important;
+}
 /* ================= NÚT NGÔN NGỮ + SÁNG/TỐI ================= */
 .lang-btn { display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 1.5px solid rgba(255,255,255,.7); width: auto; min-width: 36px; height: 28px; border-radius: 14px; padding: 0 8px; }
 .lang-btn:hover { color: var(--red); background: #fff; }
