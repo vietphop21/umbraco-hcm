@@ -344,3 +344,16 @@ h1, h3, .sapo, .card-title { overflow-wrap: anywhere; }
     .footer-links { width: 100%; }
     .footer-links select { flex: 1; min-width: 0; }
 }
+
+/* ================= HEADER MOBILE gọn ================= */
+@media (max-width: 767px) {
+    .banner-default { height: 68px; background: linear-gradient(90deg, var(--red) 0 62px, #fff7ec 62px); }
+    .banner-left { padding-left: 8px; }
+    .emblem, .banner-left .logo { width: 46px; height: 46px; font-size: 22px; box-shadow: none; }
+    .site-name { font-size: 24px; letter-spacing: 1px; -webkit-text-stroke: 1px var(--red-dark); text-shadow: 1px 1px 0 var(--red-dark); }
+    .slogan { font-size: 13px; margin-top: 2px; }
+    .nav-inner { min-height: 40px; }
+    .nav-btn { width: 32px; height: 32px; font-size: 16px; }
+    .search-btn { font-size: 13px; }
+    .nav-tools { gap: 6px; padding: 4px 0; }
+}
