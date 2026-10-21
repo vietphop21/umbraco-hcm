@@ -6,7 +6,25 @@ namespace HcmPortal.Infrastructure;
 
 public static class SiteHelpers
 {
-    public static readonly string[] ItemTypes = { "article", "videoItem", "photoAlbum", "audioItem" };
+    public static readonly string[] ItemTypes = { DocTypes.Article, DocTypes.Video, DocTypes.Album, DocTypes.Audio };
+
+    /// <summary>Bản tiếng Anh nằm dưới /en; còn lại là tiếng Việt.</summary>
+    public static bool IsEn =>
+        Umbraco.Cms.Web.Common.DependencyInjection.StaticServiceProvider.Instance.GetService<IVariationContextAccessor>()?.VariationContext?.Culture is { } c && c.Equals(Cultures.En, StringComparison.OrdinalIgnoreCase);
+
+    public static string HtmlLang => IsEn ? Cultures.EnHtml : Cultures.ViHtml;
+
+    public static string OtherCulture => IsEn ? Cultures.Vi : Cultures.En;
+
+    public static string OtherLabel => IsEn ? Cultures.ViLabel : Cultures.EnLabel;
+
+    public static string T(string vi) => IsEn && UiText.En.TryGetValue(vi, out var en) ? en : vi;
+
+    public static string DayName(DateTime d) => (IsEn ? UiText.EnDays : UiText.ViDays)[(int)d.DayOfWeek];
+
+    /// <summary>Trang chưa có bản ngôn ngữ kia thì chuyển về trang chủ của ngôn ngữ đó.</summary>
+    public static string SwitchLanguageUrl(this IPublishedContent page, IPublishedContent home)
+        => page.Cultures.ContainsKey(OtherCulture) ? page.Url(OtherCulture) : home.Url(OtherCulture);
 
     /// <summary>Bài viết (mọi loại) nằm dưới một chuyên mục, mới nhất trước.</summary>
     public static IEnumerable<IPublishedContent> Items(this IPublishedContent? section, int take = int.MaxValue)

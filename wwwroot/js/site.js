@@ -1,7 +1,6 @@
 (function () {
-    // Đồng hồ ngày giờ tiếng Việt
     var clock = document.getElementById('clock');
-    var days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+    var days = clock ? JSON.parse(clock.dataset.days) : [];
     function pad(n) { return n < 10 ? '0' + n : n; }
     function tick() {
         if (!clock) return;
@@ -44,6 +43,14 @@
 
     // Lightbox album ảnh
     if (window.GLightbox) GLightbox({ selector: '.glightbox' });
+
+    var themeBtn = document.querySelector('.theme-btn');
+    if (themeBtn) themeBtn.addEventListener('click', function () {
+        var root = document.documentElement, b = themeBtn.dataset;
+        var next = root.dataset.theme === b.dark ? b.light : b.dark;
+        root.dataset.theme = next;
+        try { localStorage.setItem(b.storageKey, next); } catch (e) { }
+    });
 })();
 
 // Đổi cỡ chữ bài viết (A- A A+)

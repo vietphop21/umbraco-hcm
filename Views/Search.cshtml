@@ -12,14 +12,14 @@
 <div class="container page-wrap">
     <div class="two-col">
         <div class="main-list">
-            <h1 class="sec-title line">Tìm kiếm</h1>
+            <h1 class="sec-title line">@Model.Name</h1>
             <form class="search-big" method="get">
-                <input type="search" name="q" value="@q" placeholder="Nhập từ khóa (có dấu hoặc không dấu)..." />
-                <button type="submit"><i class="fa fa-search"></i> Tìm</button>
+                <input type="search" name="q" value="@q" placeholder="@SiteHelpers.T("Nhập từ khóa (có dấu hoặc không dấu)...")" />
+                <button type="submit"><i class="fa fa-search"></i> @SiteHelpers.T("Tìm")</button>
             </form>
             @if (q.Length > 0)
             {
-                <p style="margin-bottom:16px">Tìm thấy <strong>@all.Count</strong> kết quả cho "<strong>@q</strong>"</p>
+                <p style="margin-bottom:16px">@SiteHelpers.T("Tìm thấy") <strong>@all.Count</strong> @SiteHelpers.T("kết quả cho") "<strong>@q</strong>"</p>
                 @foreach (var x in results)
                 {
                     <article class="list-item">
@@ -31,7 +31,7 @@
                             <div class="list-text">
                                 <time>@x.DateText()</time>
                                 <p class="sapo">@x.Value("summary")</p>
-                                <a class="more" href="@x.Url()">Xem chi tiết »</a>
+                                <a class="more" href="@x.Url()">@SiteHelpers.T("Xem chi tiết »")</a>
                             </div>
                         </div>
                     </article>
