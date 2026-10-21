@@ -1,0 +1,57 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    // Cột phải dùng chung: Tư liệu Video / Ảnh / Audio (lấy theo cấu hình ở node Trang chủ)
+    var home = Model.Root();
+    var videos = home.Picked("videoSection");
+    var photos = home.Picked("photoSection");
+    var audios = home.Picked("audioSection");
+
+    IHtmlContent Thumb(IPublishedContent x, int w, int h, string icon)
+    {
+        var img = x.Img(w, h);
+        var inner = img != null
+            ? $"<img src=\"{img}\" alt=\"{System.Net.WebUtility.HtmlEncode(x.Name)}\" loading=\"lazy\" />"
+            : "<span class=\"noimg\"><i class=\"fa fa-image\"></i></span>";
+        return new HtmlString($"<a class=\"thumb\" href=\"{x.Url()}\">{inner}<span class=\"ico\"><i class=\"fa {icon}\"></i></span></a>");
+    }
+}
+<aside class="side-col">
+    @if (videos != null)
+    {
+        var items = videos.Items(4).ToList();
+        <section class="sec">
+            <h2 class="sec-title line"><a href="@videos.Url()">@videos.Name</a></h2>
+            @if (items.Any())
+            {
+                <article class="item-v">
+                    @Thumb(items[0], 480, 300, "fa-play")
+                    <h3><a href="@items[0].Url()">@items[0].Name</a></h3>
+                </article>
+            }
+            @foreach (var x in items.Skip(1))
+            {
+                <article class="item-h">@Thumb(x, 200, 125, "fa-play")<h3><a href="@x.Url()">@x.Name</a></h3></article>
+            }
+        </section>
+    }
+    @if (photos != null)
+    {
+        <section class="sec">
+            <h2 class="sec-title line"><a href="@photos.Url()">@photos.Name</a></h2>
+            @foreach (var x in photos.Items(3))
+            {
+                <article class="item-h">@Thumb(x, 200, 125, "fa-camera")<h3><a href="@x.Url()">@x.Name</a></h3></article>
+            }
+        </section>
+    }
+    @if (audios != null)
+    {
+        <section class="sec">
+            <h2 class="sec-title line"><a href="@audios.Url()">@audios.Name</a></h2>
+            @foreach (var x in audios.Items(4))
+            {
+                <article class="item-h">@Thumb(x, 200, 125, "fa-volume-high")<h3><a href="@x.Url()">@x.Name</a></h3></article>
+            }
+        </section>
+    }
+</aside>

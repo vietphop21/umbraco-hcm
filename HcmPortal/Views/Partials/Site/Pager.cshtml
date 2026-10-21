@@ -1,0 +1,28 @@
+@model (int Page, int Total, string Query)
+@{
+    // Phân trang: « ‹ 1 … 4 5 [6] 7 8 … 20 › »
+    string Link(int p) => $"?{Model.Query}page={p}";
+    var from = Math.Max(1, Model.Page - 2);
+    var to = Math.Min(Model.Total, Model.Page + 2);
+}
+@if (Model.Total > 1)
+{
+    <nav class="pager" aria-label="Phân trang">
+        @if (Model.Page > 1)
+        {
+            <a href="@Link(1)" title="Trang đầu">«</a>
+            <a href="@Link(Model.Page - 1)" title="Trang trước">‹</a>
+        }
+        @if (from > 1) { <a href="@Link(1)">1</a> if (from > 2) { <span>…</span> } }
+        @for (var p = from; p <= to; p++)
+        {
+            <a class="@(p == Model.Page ? "active" : "")" href="@Link(p)">@p</a>
+        }
+        @if (to < Model.Total) { if (to < Model.Total - 1) { <span>…</span> } <a href="@Link(Model.Total)">@Model.Total</a> }
+        @if (Model.Page < Model.Total)
+        {
+            <a href="@Link(Model.Page + 1)" title="Trang sau">›</a>
+            <a href="@Link(Model.Total)" title="Trang cuối">»</a>
+        }
+    </nav>
+}

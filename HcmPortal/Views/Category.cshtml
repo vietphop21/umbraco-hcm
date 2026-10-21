@@ -1,0 +1,71 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "Master.cshtml";
+    const int pageSize = 12;
+    int.TryParse(Context.Request.Query["page"], out var page);
+
+    var isMuseum = Model.Children().Any(x => x.ContentType.Alias == "museumItem");
+    var all = Model.Items().ToList();
+    var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)pageSize));
+    page = Math.Clamp(page, 1, totalPages);
+    var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    var subs = Model.MenuChildren().ToList();
+}
+<div class="container page-wrap">
+    <div class="two-col">
+        <div class="main-list">
+            <div class="cat-head">
+                <h1 class="sec-title line"><a href="@Model.Url()">@Model.Name</a></h1>
+                @if (subs.Any())
+                {
+                    <ul class="cat-subs">
+                        @foreach (var s in subs) { <li><a href="@s.Url()">@s.Name</a></li> }
+                    </ul>
+                }
+            </div>
+            @if (Model.HasValue("description")) { <p class="cat-desc">@Model.Value("description")</p> }
+
+            @if (isMuseum)
+            {
+                <div class="grid g3">
+                    @foreach (var x in Model.Children())
+                    {
+                        var img = x.Img(480, 300);
+                        <a class="museum-item" href="@(x.Value<string>("link") ?? "#")" target="_blank" rel="noopener">
+                            <span class="thumb">
+                                @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-landmark"></i></span> }
+                                <span class="ico"><i class="fa fa-play"></i></span>
+                            </span>
+                            <span class="cap">@x.Name</span>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                @foreach (var x in items)
+                {
+                    var img = x.Img(360, 240);
+                    var icon = x.ContentType.Alias switch { "videoItem" => "fa-play", "photoAlbum" => "fa-camera", "audioItem" => "fa-volume-high", _ => null };
+                    <article class="list-item">
+                        <h3><a href="@x.Url()">@x.Name</a></h3>
+                        <div class="list-row">
+                            <a class="thumb" href="@x.Url()">
+                                @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
+                                @if (icon != null) { <span class="ico"><i class="fa @icon"></i></span> }
+                            </a>
+                            <div class="list-text">
+                                <time>@x.DateText()</time>
+                                <p class="sapo">@x.Value("summary")</p>
+                                <a class="more" href="@x.Url()">Xem chi tiết »</a>
+                            </div>
+                        </div>
+                    </article>
+                }
+                @if (!all.Any()) { <p class="empty">Chuyên mục chưa có bài viết.</p> }
+                <partial name="Site/Pager" model="(page, totalPages, string.Empty)" />
+            }
+        </div>
+        <partial name="Site/Sidebar" />
+    </div>
+</div>

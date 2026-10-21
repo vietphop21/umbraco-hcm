@@ -1,0 +1,27 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "Master.cshtml";
+    var home = Model.Root();
+}
+@functions {
+    void Tree(IEnumerable<IPublishedContent> nodes)
+    {
+        <ul>
+            @foreach (var n in nodes)
+            {
+                <li>
+                    <a href="@n.Url()">@n.Name</a>
+                    @{ var subs = n.Children().Where(c => c.ContentType.Alias == "category").ToList(); }
+                    @if (subs.Any()) { Tree(subs); }
+                </li>
+            }
+        </ul>
+    }
+}
+<div class="container">
+    <partial name="Site/Breadcrumb" />
+    <div class="cat-head"><h1>@Model.Name</h1></div>
+    <div class="sitemap">
+        @{ Tree(home.Children().Where(c => c.ContentType.Alias is "category" or "textPage")); }
+    </div>
+</div>

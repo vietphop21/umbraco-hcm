@@ -1,0 +1,148 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = null;
+    var home = Model.Root();
+    var siteName = home.Value<string>("siteName") ?? "Hồ Chí Minh";
+    var slogan = home.Value<string>("slogan");
+    var logo = home.Img(200, 200, "logo");
+    var banner = home.Value<IPublishedContent>("bannerImage")?.Url();
+    var bannerMobile = home.Value<IPublishedContent>("bannerMobile")?.Url() ?? banner;
+    var searchPage = home.Children().FirstOrDefault(x => x.ContentType.Alias == "searchPage");
+    var title = Model.Id == home.Id ? siteName : $"{Model.Name} - {siteName}";
+    var links = (home.Value<string>("websiteLinks") ?? "")
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+        .Select(l => l.Split('|')).Where(p => p.Length == 2);
+    var pages = home.Children().Where(x => x.ContentType.Alias is "textPage" or "sitemapPage").ToList();
+}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Dancing+Script:wght@700&family=Noto+Serif:wght@700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/css/glightbox.min.css" />
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<header class="site-header">
+    <a class="banner" href="@home.Url()">
+        @if (banner != null)
+        {
+            <picture>
+                <source media="(max-width: 767px)" srcset="@bannerMobile" />
+                <img src="@banner" alt="@siteName" />
+            </picture>
+        }
+        else
+        {
+            <div class="banner-default">
+                <div class="banner-left">
+                    @if (logo != null) { <img class="logo" src="@logo" alt="" /> }
+                    else { <span class="emblem"><i class="fa fa-star"></i></span> }
+                </div>
+                <div class="banner-center">
+                    <span class="site-name">@siteName</span>
+                    @if (!string.IsNullOrEmpty(slogan)) { <span class="slogan">@slogan</span> }
+                </div>
+                <div class="banner-right" aria-hidden="true"></div>
+            </div>
+        }
+    </a>
+    <nav class="mainnav">
+        <div class="container nav-inner">
+            <ul class="menu">
+                <li class="home-ico @(Model.Id == home.Id ? "active" : "")"><a href="@home.Url()" aria-label="Trang chủ"><i class="fa fa-house"></i></a></li>
+                @foreach (var item in home.MenuChildren())
+                {
+                    var subs = item.MenuChildren().ToList();
+                    var active = Model.Path.Split(',').Contains(item.Id.ToString());
+                    <li class="@(active ? "active" : "") @(subs.Any() ? "has-sub" : "")">
+                        <a href="@item.Url()">@item.Name</a>
+                        @if (subs.Any())
+                        {
+                            <ul class="sub">
+                                @foreach (var sub in subs)
+                                {
+                                    var subs2 = sub.MenuChildren().ToList();
+                                    <li class="@(subs2.Any() ? "has-sub" : "")">
+                                        <a href="@sub.Url()">@sub.Name</a>
+                                        @if (subs2.Any())
+                                        {
+                                            <ul class="sub sub2">
+                                                @foreach (var s2 in subs2) { <li><a href="@s2.Url()">@s2.Name</a></li> }
+                                            </ul>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </li>
+                }
+            </ul>
+            <div class="nav-tools">
+                <button class="nav-btn" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')"><i class="fa fa-bars"></i></button>
+                <button class="nav-btn search-btn" aria-label="Tìm kiếm" onclick="document.body.classList.toggle('search-open');document.querySelector('.search-drop input').focus()"><i class="fa fa-search"></i></button>
+            </div>
+        </div>
+        <form class="search-drop" action="@(searchPage?.Url() ?? "/")" method="get">
+            <div class="container">
+                <input type="search" name="q" placeholder="Nhập từ khóa tìm kiếm (có dấu hoặc không dấu)..." aria-label="Tìm kiếm" />
+                <button type="submit">Tìm kiếm</button>
+            </div>
+        </form>
+    </nav>
+</header>
+
+<div class="container datebar">
+    <div class="date-box"><i class="fa-regular fa-calendar"></i> <span id="clock"></span></div>
+    <div class="ticker">
+        <div class="ticker-move">
+            @foreach (var t in home.Items(10).ToList() is var tk ? tk.Concat(tk) : null!) { <a href="@t.Url()"><i class="fa fa-star"></i> @t.Name</a> }
+        </div>
+    </div>
+</div>
+
+<main class="site-main">
+    @RenderBody()
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-top">
+            <p class="org">@home.Value("footerOrg")</p>
+            @if (links.Any())
+            {
+                <label class="footer-links">
+                    <span>Liên kết website</span>
+                    <select onchange="if(this.value) window.open(this.value, '_blank')">
+                        <option value="">-- Chọn liên kết --</option>
+                        @foreach (var l in links) { <option value="@l[1].Trim()">@l[0].Trim()</option> }
+                    </select>
+                </label>
+            }
+        </div>
+        <div class="footer-info">
+            <p><i class="fa fa-copyright"></i> @home.Value("footerCopyright")</p>
+            <p><i class="fa fa-location-dot"></i> <b>Địa chỉ:</b> @home.Value("footerAddress")</p>
+            @if (home.HasValue("footerEmail"))
+            {
+                <p><i class="fa fa-envelope"></i> <b>Email:</b> <a href="mailto:@home.Value("footerEmail")">@home.Value("footerEmail")</a></p>
+            }
+        </div>
+        @if (pages.Any())
+        {
+            <div class="footer-pages">
+                @foreach (var p in pages) { <a href="@p.Url()">@p.Name</a> }
+            </div>
+        }
+    </div>
+</footer>
+<a href="#" class="to-top" aria-label="Lên đầu trang"><i class="fa fa-arrow-up"></i></a>
+
+<script src="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js"></script>
+<script src="/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

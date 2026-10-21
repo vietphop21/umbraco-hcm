@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Umbraco.Cms" Version="13.16.2" />
+    <PackageReference Include="uSync" Version="13.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Opt-in to app-local ICU to ensure consistent globalization APIs across different platforms -->
+    <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
+    <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Dữ liệu seed demo (danh sách ảnh Commons, video/mp3 test) cần có trong bản publish -->
+    <Content Update="Setup\commons-images.json" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="Setup\demo-media\**" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Razor files are needed for the backoffice to work correctly -->
+    <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- ModelsMode = Nothing: view được biên dịch sẵn lúc build (không biên dịch lúc chạy trên server) -->
+    <RazorCompileOnBuild>true</RazorCompileOnBuild>
+    <RazorCompileOnPublish>true</RazorCompileOnPublish>
+  </PropertyGroup>
+
+</Project>

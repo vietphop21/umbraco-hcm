@@ -1,0 +1,24 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@{
+    // ViewData: "w","h" kích thước ảnh, "summary" hiện sapo, "date" hiện ngày, "cls" class thêm
+    var w = ViewData["w"] as int? ?? 480;
+    var h = ViewData["h"] as int? ?? 270;
+    var img = Model.Img(w, h);
+    var isVideo = Model.ContentType.Alias == "videoItem";
+    var isAudio = Model.ContentType.Alias == "audioItem";
+    var isAlbum = Model.ContentType.Alias == "photoAlbum";
+}
+<article class="card @ViewData["cls"]">
+    <a class="thumb" href="@Model.Url()">
+        @if (img != null) { <img src="@img" alt="@Model.Name" loading="lazy" /> }
+        else { <span class="noimg"><i class="fa fa-image"></i></span> }
+        @if (isVideo) { <span class="badge-ico"><i class="fa fa-play"></i></span> }
+        @if (isAudio) { <span class="badge-ico"><i class="fa fa-headphones"></i></span> }
+        @if (isAlbum) { <span class="badge-ico"><i class="fa fa-camera"></i></span> }
+    </a>
+    <div class="card-body">
+        <h3 class="card-title"><a href="@Model.Url()">@Model.Name</a></h3>
+        @if (ViewData["date"] as bool? == true) { <time>@Model.DateText()</time> }
+        @if (ViewData["summary"] as bool? == true && Model.HasValue("summary")) { <p class="sapo">@Model.Value("summary")</p> }
+    </div>
+</article>

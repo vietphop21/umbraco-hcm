@@ -1,0 +1,97 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = "Master.cshtml";
+    var type = Model.ContentType.Alias;
+    var parent = Model.Parent;
+    var related = parent?.Items(9).Where(x => x.Id != Model.Id).Take(8).ToList() ?? new();
+    var youtube = SiteHelpers.YoutubeEmbed(Model.Value<string>("youtubeUrl"));
+    var videoFile = Model.Value<IPublishedContent>("videoFile")?.Url();
+    var audioFile = Model.Value<IPublishedContent>("audioFile")?.Url();
+    var photos = Model.Value<IEnumerable<IPublishedContent>>("photos") ?? Enumerable.Empty<IPublishedContent>();
+    var days = new[] { "Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy" };
+    var d = Model.Date();
+}
+<div class="container page-wrap">
+    <div class="two-col">
+        <article class="detail">
+            @if (parent != null) { <h2 class="sec-title line"><a href="@parent.Url()">@parent.Name</a></h2> }
+            <div class="detail-tools">
+                <time>@days[(int)d.DayOfWeek], @d.ToString("dd/MM/yyyy") | @d.ToString("HH:mm")</time>
+                <div class="tools">
+                    <button data-font="-1" title="Giảm cỡ chữ">A<sup>-</sup></button>
+                    <button data-font="0" title="Cỡ chữ mặc định">A</button>
+                    <button data-font="1" title="Tăng cỡ chữ">A<sup>+</sup></button>
+                    <span class="sep"></span>
+                    <button onclick="window.print()" title="In bài viết"><i class="fa fa-print"></i></button>
+                    <a href="mailto:?subject=@Uri.EscapeDataString(Model.Name ?? "")&body=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Model.Url())" title="Gửi email"><i class="fa fa-envelope"></i></a>
+                    <button onclick="navigator.clipboard.writeText(location.href);this.title='Đã sao chép'" title="Sao chép liên kết"><i class="fa fa-link"></i></button>
+                </div>
+            </div>
+
+            <h1>@Model.Name</h1>
+            @if (Model.HasValue("summary")) { <p class="detail-sapo">@Model.Value("summary")</p> }
+
+            @if (type == "videoItem")
+            {
+                <div class="player">
+                    @if (youtube != null) { <iframe src="@youtube" allowfullscreen allow="autoplay; encrypted-media"></iframe> }
+                    else if (videoFile != null) { <video controls preload="metadata" poster="@Model.Img(960, 540)" src="@videoFile"></video> }
+                    else
+                    {
+                        <div class="player-empty">
+                            @if (Model.Img(960, 540) is string poster) { <img src="@poster" alt="" /> }
+                            <span><i class="fa fa-circle-play"></i>Video đang được cập nhật</span>
+                        </div>
+                    }
+                </div>
+            }
+            @if (type == "audioItem")
+            {
+                <div class="audio-box">
+                    @if (Model.Img(200, 200) is string cover) { <img src="@cover" alt="" /> }
+                    <div>
+                        <strong><i class="fa fa-headphones"></i> Nghe audio</strong>
+                        @if (audioFile != null) { <audio class="audio-player" controls preload="metadata" src="@audioFile"></audio> }
+                        else { <p class="empty">File audio đang được cập nhật.</p> }
+                    </div>
+                </div>
+            }
+            @if (type == "photoAlbum" && photos.Any())
+            {
+                <div class="grid g3 album">
+                    @foreach (var p in photos)
+                    {
+                        <a class="glightbox" data-gallery="album" href="@p.GetCropUrl(width: 1600)">
+                            <img src="@p.GetCropUrl(width: 480, height: 320, imageCropMode: ImageCropMode.Crop)" alt="@p.Name" loading="lazy" />
+                        </a>
+                    }
+                </div>
+            }
+
+            <div class="detail-body" id="detail-body">@Model.Value("bodyText")</div>
+            @if (Model.HasValue("source")) { <p class="source">@Model.Value("source")</p> }
+
+            @if (related.Any())
+            {
+                <div class="related">
+                    <h2 class="sec-title line">Tin cùng chuyên mục</h2>
+                    <div class="grid g4">
+                        @foreach (var x in related.Take(4))
+                        {
+                            <article class="item-v">
+                                <a class="thumb" href="@x.Url()">
+                                    @if (x.Img(400, 250) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
+                                </a>
+                                <h3><a href="@x.Url()">@x.Name</a></h3>
+                            </article>
+                        }
+                    </div>
+                    <ul class="related-list">
+                        @foreach (var x in related.Skip(4)) { <li><a href="@x.Url()">@x.Name</a> <time>(@x.Date().ToString("dd/MM/yyyy"))</time></li> }
+                    </ul>
+                </div>
+            }
+        </article>
+        <partial name="Site/Sidebar" />
+    </div>
+</div>
