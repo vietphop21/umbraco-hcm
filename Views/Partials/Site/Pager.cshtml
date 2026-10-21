@@ -7,11 +7,11 @@
 }
 @if (Model.Total > 1)
 {
-    <nav class="pager" aria-label="Phân trang">
+    <nav class="pager" aria-label="@SiteHelpers.T("Phân trang")">
         @if (Model.Page > 1)
         {
-            <a href="@Link(1)" title="Trang đầu">«</a>
-            <a href="@Link(Model.Page - 1)" title="Trang trước">‹</a>
+            <a href="@Link(1)" title="@SiteHelpers.T("Trang đầu")">«</a>
+            <a href="@Link(Model.Page - 1)" title="@SiteHelpers.T("Trang trước")">‹</a>
         }
         @if (from > 1) { <a href="@Link(1)">1</a> if (from > 2) { <span>…</span> } }
         @for (var p = from; p <= to; p++)
@@ -21,8 +21,8 @@
         @if (to < Model.Total) { if (to < Model.Total - 1) { <span>…</span> } <a href="@Link(Model.Total)">@Model.Total</a> }
         @if (Model.Page < Model.Total)
         {
-            <a href="@Link(Model.Page + 1)" title="Trang sau">›</a>
-            <a href="@Link(Model.Total)" title="Trang cuối">»</a>
+            <a href="@Link(Model.Page + 1)" title="@SiteHelpers.T("Trang sau")">›</a>
+            <a href="@Link(Model.Total)" title="@SiteHelpers.T("Trang cuối")">»</a>
         }
     </nav>
 }

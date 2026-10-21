@@ -18,8 +18,10 @@ public class SiteSetupComposer : IComposer
     public void Compose(IUmbracoBuilder builder)
     {
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, SiteSetupHandler>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, MultilingualSetupHandler>();
         // Lần chạy đầu: Umbraco tự cài xong mới bắn notification này -> tạo dữ liệu ngay, không cần chạy lại
         builder.AddNotificationHandler<UnattendedInstallNotification, SiteSetupHandler>();
+        builder.AddNotificationHandler<UnattendedInstallNotification, MultilingualSetupHandler>();
     }
 }
 

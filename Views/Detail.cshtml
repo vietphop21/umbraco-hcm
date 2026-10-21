@@ -8,7 +8,6 @@
     var videoFile = Model.Value<IPublishedContent>("videoFile")?.Url();
     var audioFile = Model.Value<IPublishedContent>("audioFile")?.Url();
     var photos = Model.Value<IEnumerable<IPublishedContent>>("photos") ?? Enumerable.Empty<IPublishedContent>();
-    var days = new[] { "Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy" };
     var d = Model.Date();
 }
 <div class="container page-wrap">
@@ -16,15 +15,15 @@
         <article class="detail">
             @if (parent != null) { <h2 class="sec-title line"><a href="@parent.Url()">@parent.Name</a></h2> }
             <div class="detail-tools">
-                <time>@days[(int)d.DayOfWeek], @d.ToString("dd/MM/yyyy") | @d.ToString("HH:mm")</time>
+                <time>@SiteHelpers.DayName(d), @d.ToString("dd/MM/yyyy") | @d.ToString("HH:mm")</time>
                 <div class="tools">
-                    <button data-font="-1" title="Giảm cỡ chữ">A<sup>-</sup></button>
-                    <button data-font="0" title="Cỡ chữ mặc định">A</button>
-                    <button data-font="1" title="Tăng cỡ chữ">A<sup>+</sup></button>
+                    <button data-font="-1" title="@SiteHelpers.T("Giảm cỡ chữ")">A<sup>-</sup></button>
+                    <button data-font="0" title="@SiteHelpers.T("Cỡ chữ mặc định")">A</button>
+                    <button data-font="1" title="@SiteHelpers.T("Tăng cỡ chữ")">A<sup>+</sup></button>
                     <span class="sep"></span>
-                    <button onclick="window.print()" title="In bài viết"><i class="fa fa-print"></i></button>
-                    <a href="mailto:?subject=@Uri.EscapeDataString(Model.Name ?? "")&body=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Model.Url())" title="Gửi email"><i class="fa fa-envelope"></i></a>
-                    <button onclick="navigator.clipboard.writeText(location.href);this.title='Đã sao chép'" title="Sao chép liên kết"><i class="fa fa-link"></i></button>
+                    <button onclick="window.print()" title="@SiteHelpers.T("In bài viết")"><i class="fa fa-print"></i></button>
+                    <a href="mailto:?subject=@Uri.EscapeDataString(Model.Name ?? "")&body=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Model.Url())" title="@SiteHelpers.T("Gửi email")"><i class="fa fa-envelope"></i></a>
+                    <button onclick="navigator.clipboard.writeText(location.href);this.title='@SiteHelpers.T("Đã sao chép")'" title="@SiteHelpers.T("Sao chép liên kết")"><i class="fa fa-link"></i></button>
                 </div>
             </div>
 
@@ -40,7 +39,7 @@
                     {
                         <div class="player-empty">
                             @if (Model.Img(960, 540) is string poster) { <img src="@poster" alt="" /> }
-                            <span><i class="fa fa-circle-play"></i>Video đang được cập nhật</span>
+                            <span><i class="fa fa-circle-play"></i>@SiteHelpers.T("Video đang được cập nhật")</span>
                         </div>
                     }
                 </div>
@@ -50,9 +49,9 @@
                 <div class="audio-box">
                     @if (Model.Img(200, 200) is string cover) { <img src="@cover" alt="" /> }
                     <div>
-                        <strong><i class="fa fa-headphones"></i> Nghe audio</strong>
+                        <strong><i class="fa fa-headphones"></i> @SiteHelpers.T("Nghe audio")</strong>
                         @if (audioFile != null) { <audio class="audio-player" controls preload="metadata" src="@audioFile"></audio> }
-                        else { <p class="empty">File audio đang được cập nhật.</p> }
+                        else { <p class="empty">@SiteHelpers.T("File audio đang được cập nhật.")</p> }
                     </div>
                 </div>
             }
@@ -74,7 +73,7 @@
             @if (related.Any())
             {
                 <div class="related">
-                    <h2 class="sec-title line">Tin cùng chuyên mục</h2>
+                    <h2 class="sec-title line">@SiteHelpers.T("Tin cùng chuyên mục")</h2>
                     <div class="grid g4">
                         @foreach (var x in related.Take(4))
                         {

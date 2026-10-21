@@ -2,7 +2,7 @@
 <nav class="breadcrumb">
     @foreach (var a in Model.Ancestors().Reverse())
     {
-        <a href="@a.Url()">@(a.Level == 1 ? "Trang chủ" : a.Name)</a><i class="fa fa-angle-right"></i>
+        <a href="@a.Url()">@(a.Level == 1 ? SiteHelpers.T("Trang chủ") : a.Name)</a><i class="fa fa-angle-right"></i>
     }
     <span>@Model.Name</span>
 </nav>

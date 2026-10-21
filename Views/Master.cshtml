@@ -2,8 +2,8 @@
 @{
     Layout = null;
     var home = Model.Root();
-    var siteName = home.Value<string>("siteName") ?? "Hồ Chí Minh";
-    var slogan = home.Value<string>("slogan");
+    var siteName = home.Value<string>(Props.SiteName) ?? home.Name;
+    var slogan = home.Value<string>(Props.Slogan);
     var logo = home.Img(200, 200, "logo");
     var banner = home.Value<IPublishedContent>("bannerImage")?.Url();
     var bannerMobile = home.Value<IPublishedContent>("bannerMobile")?.Url() ?? banner;
@@ -15,7 +15,7 @@
     var pages = home.Children().Where(x => x.ContentType.Alias is "textPage" or "sitemapPage").ToList();
 }
 <!doctype html>
-<html lang="vi">
+<html lang="@SiteHelpers.HtmlLang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+    <script>(function(){var t;try{t=localStorage.getItem("@Theme.StorageKey")}catch(e){}if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"@Theme.Dark":"@Theme.Light";document.documentElement.dataset.theme=t})()</script>
 </head>
 <body>
 <header class="site-header">
@@ -54,7 +55,7 @@
     <nav class="mainnav">
         <div class="container nav-inner">
             <ul class="menu">
-                <li class="home-ico @(Model.Id == home.Id ? "active" : "")"><a href="@home.Url()" aria-label="Trang chủ"><i class="fa fa-house"></i></a></li>
+                <li class="home-ico @(Model.Id == home.Id ? "active" : "")"><a href="@home.Url()" aria-label="@SiteHelpers.T("Trang chủ")"><i class="fa fa-house"></i></a></li>
                 @foreach (var item in home.MenuChildren())
                 {
                     var subs = item.MenuChildren().ToList();
@@ -84,20 +85,22 @@
             </ul>
             <div class="nav-tools">
                 <button class="nav-btn" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')"><i class="fa fa-bars"></i></button>
-                <button class="nav-btn search-btn" aria-label="Tìm kiếm" onclick="document.body.classList.toggle('search-open');document.querySelector('.search-drop input').focus()"><i class="fa fa-search"></i></button>
+                <a class="nav-btn lang-btn" href="@Model.SwitchLanguageUrl(home)" hreflang="@SiteHelpers.OtherCulture" title="@SiteHelpers.T("Chuyển sang tiếng Anh")">@SiteHelpers.OtherLabel</a>
+                <button class="nav-btn theme-btn" type="button" data-storage-key="@Theme.StorageKey" data-dark="@Theme.Dark" data-light="@Theme.Light" aria-label="@SiteHelpers.T("Chế độ sáng/tối")" title="@SiteHelpers.T("Chế độ sáng/tối")"><i class="fa fa-moon"></i><i class="fa fa-sun"></i></button>
+                <button class="nav-btn search-btn" aria-label="@SiteHelpers.T("Tìm kiếm")" onclick="document.body.classList.toggle('search-open');document.querySelector('.search-drop input').focus()"><i class="fa fa-search"></i></button>
             </div>
         </div>
         <form class="search-drop" action="@(searchPage?.Url() ?? "/")" method="get">
             <div class="container">
-                <input type="search" name="q" placeholder="Nhập từ khóa tìm kiếm (có dấu hoặc không dấu)..." aria-label="Tìm kiếm" />
-                <button type="submit">Tìm kiếm</button>
+                <input type="search" name="q" placeholder="@SiteHelpers.T("Nhập từ khóa tìm kiếm (có dấu hoặc không dấu)...")" aria-label="@SiteHelpers.T("Tìm kiếm")" />
+                <button type="submit">@SiteHelpers.T("Tìm kiếm")</button>
             </div>
         </form>
     </nav>
 </header>
 
 <div class="container datebar">
-    <div class="date-box"><i class="fa-regular fa-calendar"></i> <span id="clock"></span></div>
+    <div class="date-box"><i class="fa-regular fa-calendar"></i> <span id="clock" data-days='@System.Text.Json.JsonSerializer.Serialize(SiteHelpers.IsEn ? UiText.EnDays : UiText.ViDays)'></span></div>
     <div class="ticker">
         <div class="ticker-move">
             @foreach (var t in home.Items(10).ToList() is var tk ? tk.Concat(tk) : null!) { <a href="@t.Url()"><i class="fa fa-star"></i> @t.Name</a> }
@@ -116,9 +119,9 @@
             @if (links.Any())
             {
                 <label class="footer-links">
-                    <span>Liên kết website</span>
+                    <span>@SiteHelpers.T("Liên kết website")</span>
                     <select onchange="if(this.value) window.open(this.value, '_blank')">
-                        <option value="">-- Chọn liên kết --</option>
+                        <option value="">@SiteHelpers.T("-- Chọn liên kết --")</option>
                         @foreach (var l in links) { <option value="@l[1].Trim()">@l[0].Trim()</option> }
                     </select>
                 </label>
@@ -126,7 +129,7 @@
         </div>
         <div class="footer-info">
             <p><i class="fa fa-copyright"></i> @home.Value("footerCopyright")</p>
-            <p><i class="fa fa-location-dot"></i> <b>Địa chỉ:</b> @home.Value("footerAddress")</p>
+            <p><i class="fa fa-location-dot"></i> <b>@SiteHelpers.T("Địa chỉ"):</b> @home.Value("footerAddress")</p>
             @if (home.HasValue("footerEmail"))
             {
                 <p><i class="fa fa-envelope"></i> <b>Email:</b> <a href="mailto:@home.Value("footerEmail")">@home.Value("footerEmail")</a></p>
@@ -140,7 +143,7 @@
         }
     </div>
 </footer>
-<a href="#" class="to-top" aria-label="Lên đầu trang"><i class="fa fa-arrow-up"></i></a>
+<a href="#" class="to-top" aria-label="@SiteHelpers.T("Lên đầu trang")"><i class="fa fa-arrow-up"></i></a>
 
 <script src="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js"></script>
 <script src="/js/site.js" asp-append-version="true"></script>

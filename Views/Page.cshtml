@@ -14,7 +14,7 @@
             {
                 if (TempData["contactOk"] != null)
                 {
-                    <div class="alert ok"><i class="fa fa-circle-check"></i> Cảm ơn bạn! Thư đã được gửi tới ban biên tập.</div>
+                    <div class="alert ok"><i class="fa fa-circle-check"></i> @SiteHelpers.T("Cảm ơn bạn! Thư đã được gửi tới ban biên tập.")</div>
                 }
                 else
                 {
@@ -22,12 +22,12 @@
                     using (Html.BeginUmbracoForm<ContactController>(nameof(ContactController.Submit), null, new { @class = "contact-form" }))
                     {
                         <div class="row2">
-                            <label>Họ và tên *<input name="Name" required maxlength="100" /></label>
+                            <label>@SiteHelpers.T("Họ và tên *")<input name="Name" required maxlength="100" /></label>
                             <label>Email *<input name="Email" type="email" required maxlength="100" /></label>
                         </div>
-                        <label>Số điện thoại<input name="Phone" maxlength="20" /></label>
-                        <label>Nội dung *<textarea name="Message" rows="6" required maxlength="4000"></textarea></label>
-                        <button type="submit"><i class="fa fa-paper-plane"></i> Gửi liên hệ</button>
+                        <label>@SiteHelpers.T("Số điện thoại")<input name="Phone" maxlength="20" /></label>
+                        <label>@SiteHelpers.T("Nội dung *")<textarea name="Message" rows="6" required maxlength="4000"></textarea></label>
+                        <button type="submit"><i class="fa fa-paper-plane"></i> @SiteHelpers.T("Gửi liên hệ")</button>
                     }
                 }
             }

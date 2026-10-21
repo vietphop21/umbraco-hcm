@@ -57,12 +57,12 @@
                             <div class="list-text">
                                 <time>@x.DateText()</time>
                                 <p class="sapo">@x.Value("summary")</p>
-                                <a class="more" href="@x.Url()">Xem chi tiết »</a>
+                                <a class="more" href="@x.Url()">@SiteHelpers.T("Xem chi tiết »")</a>
                             </div>
                         </div>
                     </article>
                 }
-                @if (!all.Any()) { <p class="empty">Chuyên mục chưa có bài viết.</p> }
+                @if (!all.Any()) { <p class="empty">@SiteHelpers.T("Chuyên mục chưa có bài viết.")</p> }
                 <partial name="Site/Pager" model="(page, totalPages, string.Empty)" />
             }
         </div>
