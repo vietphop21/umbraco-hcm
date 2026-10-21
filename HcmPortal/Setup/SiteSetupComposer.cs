@@ -90,6 +90,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
                 System.IO.File.WriteAllText(versionFile, SeedVersion.ToString());
             }
             EnsureDemoPages();
+            EnsureDemoAv();
         }
         catch (Exception ex)
         {
@@ -483,6 +484,42 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         home.SetValue("worldSection", Udi(world));
         home.SetValue("wideBannerLink", Udi(chronicle));
         _content.SaveAndPublish(home);
+    }
+
+    /// <summary>
+    /// Gắn video/mp3 demo cho bài Video/Audio còn trống file (vd. site được seed khi chưa có Setup/demo-media).
+    /// Không đụng tới bài đã có file hay nội dung khác.
+    /// </summary>
+    private void EnsureDemoAv()
+    {
+        var home = _content.GetRootContent().FirstOrDefault(x => x.ContentType.Alias == "home");
+        if (home == null) return;
+
+        var targets = _content.GetPagedDescendants(home.Id, 0, 5000, out _)
+            .Where(c => (c.ContentType.Alias == "videoItem" && string.IsNullOrEmpty(c.GetValue<string>("videoFile")))
+                     || (c.ContentType.Alias == "audioItem" && string.IsNullOrEmpty(c.GetValue<string>("audioFile"))))
+            .ToList();
+        if (targets.Count == 0) return;
+
+        var folder = _media.GetRootMedia().FirstOrDefault(m => m.Name == "Video & Audio (demo)");
+        if (folder != null)
+        {
+            foreach (var m in _media.GetPagedChildren(folder.Id, 0, 100, out _))
+                (m.ContentType.Alias == "umbracoMediaVideo" ? _videos : _audios).Add(m);
+        }
+        else BuildAvPool();
+        if (_videos.Count == 0 && _audios.Count == 0) return;
+
+        foreach (var c in targets)
+        {
+            if (c.ContentType.Alias == "videoItem" && _videos.Count > 0)
+                c.SetValue("videoFile", Pick(_videos[_avIndex++ % _videos.Count]));
+            else if (c.ContentType.Alias == "audioItem" && _audios.Count > 0)
+                c.SetValue("audioFile", Pick(_audios[_avIndex++ % _audios.Count]));
+            else continue;
+            if (c.Published) _content.SaveAndPublish(c); else _content.Save(c);
+        }
+        _logger.LogInformation("Đã gắn video/audio demo cho {Count} bài", targets.Count);
     }
 
     private void EnsureDemoPages()
