@@ -27,8 +27,9 @@
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/library.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/library-extra.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/sitemap.css" asp-append-version="true" />
     <script>(function(){var t;try{t=localStorage.getItem("@Theme.StorageKey")}catch(e){}if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"@Theme.Dark":"@Theme.Light";document.documentElement.dataset.theme=t})()</script>
-    <script>(function(){var d=document.documentElement;try{var z=parseInt(localStorage.getItem("@Accessibility.ZoomKey"),10);if(z>=@Accessibility.MinZoom&&z<=@Accessibility.MaxZoom)d.style.setProperty("--a11y-zoom",z/100)}catch(e){}})()</script>
+    <script>(function(){var d=document.documentElement;try{var z=parseInt(localStorage.getItem("@Accessibility.ZoomKey"),10);if(z>=@Accessibility.MinZoom&&z<=@Accessibility.MaxZoom)d.style.setProperty("--a11y-zoom",z/100);if(localStorage.getItem("@Accessibility.ContrastKey")==="1")d.dataset.contrast="high"}catch(e){}})()</script>
 </head>
 <body>
 <div class="a11y-page">
@@ -60,12 +61,12 @@
         <div class="container nav-inner">
             <ul class="menu">
                 <li class="home-ico @(Model.Id == home.Id ? "active" : "")"><a href="@home.Url()" aria-label="@SiteHelpers.T("Trang chủ")"><i class="fa fa-house"></i></a></li>
-                @foreach (var item in home.MenuChildren())
+                @foreach (var (info, item) in home.Sections())
                 {
                     var subs = item.MenuChildren().ToList();
                     var active = Model.Path.Split(',').Contains(item.Id.ToString());
                     <li class="@(active ? "active" : "") @(subs.Any() ? "has-sub" : "")">
-                        <a href="@item.Url()">@item.Name <span class="menu-count">(@item.ItemCount())</span></a>
+                        <a href="@item.Url()" title="@item.Name">@SiteHelpers.T(info.MenuName)</a>
                         @if (subs.Any())
                         {
                             <ul class="sub">
@@ -151,18 +152,29 @@
 </footer>
 </div>
 <div class="a11y-fab" role="group" aria-label="@SiteHelpers.T("Cỡ chữ")"
-     data-zoom-key="@Accessibility.ZoomKey" data-min="@Accessibility.MinZoom" data-max="@Accessibility.MaxZoom" data-step="@Accessibility.ZoomStep">
+     data-zoom-key="@Accessibility.ZoomKey" data-contrast-key="@Accessibility.ContrastKey" data-lang="@Accessibility.SpeechLang" data-min="@Accessibility.MinZoom" data-max="@Accessibility.MaxZoom" data-step="@Accessibility.ZoomStep">
     <div class="a11y-panel">
-        <span class="a11y-title"><i class="fa fa-text-height"></i> @SiteHelpers.T("Cỡ chữ")</span>
+        <button type="button" class="a11y-title" data-a11y="toggle" aria-expanded="false" title="@SiteHelpers.T("Trợ năng")"><i class="fa fa-universal-access"></i> @SiteHelpers.T("Trợ năng")</button>
         <button type="button" data-a11y="zoom-in" title="@SiteHelpers.T("Tăng cỡ chữ")" aria-label="@SiteHelpers.T("Tăng cỡ chữ")">A<sup>+</sup></button>
         <span class="a11y-zoom" aria-live="polite">100%</span>
         <button type="button" data-a11y="zoom-out" title="@SiteHelpers.T("Giảm cỡ chữ")" aria-label="@SiteHelpers.T("Giảm cỡ chữ")">A<sup>−</sup></button>
         <button type="button" data-a11y="zoom-reset" class="reset" title="@SiteHelpers.T("Cỡ chữ mặc định")" aria-label="@SiteHelpers.T("Cỡ chữ mặc định")"><i class="fa fa-rotate-left"></i></button>
+        <button type="button" data-a11y="contrast" aria-pressed="false" title="@SiteHelpers.T("Tương phản cao")" aria-label="@SiteHelpers.T("Tương phản cao")"><i class="fa fa-circle-half-stroke"></i></button>
+        <button type="button" data-a11y="speak" aria-pressed="false" title="@SiteHelpers.T("Đọc nội dung")" aria-label="@SiteHelpers.T("Đọc nội dung")"><i class="fa fa-volume-high"></i></button>
     </div>
 </div>
 <a href="#" class="to-top" aria-label="@SiteHelpers.T("Lên đầu trang")"><i class="fa fa-arrow-up"></i></a>
 
 <script src="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js"></script>
+@if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Map)
+{
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+}
+@if (SiteHelpers.ItemTypes.Contains(Model.ContentType.Alias))
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+}
 @if (Model.ContentType.Alias == DocTypes.PdfDocument)
 {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

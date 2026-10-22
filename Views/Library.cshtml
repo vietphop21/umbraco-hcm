@@ -137,7 +137,7 @@
 
             @foreach (var x in items)
             {
-                var img = x.Img(360, 240);
+                var img = x.ImgFull(480);
                 var type = x.ContentType.Alias;
                 <article class="lib-item">
                     <a class="thumb" href="@x.Url()">

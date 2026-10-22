@@ -1,33 +1,37 @@
 ﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@*
+    Trang chủ giữ đúng 04 khối theo Đề xuất site map: Banner & giới thiệu, Ô tìm kiếm nhanh,
+    Lối tắt 11 chuyên mục, Tin tức – sự kiện – lịch hoạt động. Không thêm khối khác.
+*@
 @{
     Layout = "Master.cshtml";
-    const int FeaturedCount = 6;
-    const int AudioCount = 5;
-    const int VideoCount = 4;
     const int NewsCount = 5;
 
     var home = Model;
-    var library = home.LibraryRoot();
-    var periods = library?.Periods().ToList() ?? new();
-    var allItems = home.Items().ToList();
-    var counts = LibraryQuery.CountByType(allItems);
-    var news = home.Picked("newsSection");
-
-    var featured = (library != null ? LibraryQuery.ItemsIn(library) : allItems)
-        .Where(x => x.ContentType.Alias is DocTypes.Article or DocTypes.PdfDocument)
-        .OrderByDescending(x => x.Date()).Take(FeaturedCount).ToList();
-    var audios = allItems.Where(x => x.ContentType.Alias == DocTypes.Audio && x.HasValue(LibraryProps.AudioFile)).Take(AudioCount).ToList();
-    var videos = allItems.Where(x => x.ContentType.Alias == DocTypes.Video && x.HasValue(LibraryProps.VideoFile)).Take(VideoCount).ToList();
+    var news = home.Section(SiteMap.News) ?? home.Children().FirstOrDefault(c => c.Name == "Tin tức");
     var newsItems = news.Items(NewsCount).ToList();
-    var libraryCount = library != null ? LibraryQuery.ItemsIn(library).Count() : 0;
-    var searchAction = library?.Url() ?? home.Children().FirstOrDefault(x => x.ContentType.Alias == DocTypes.SearchPage)?.Url() ?? "/";
+    var searchUrl = home.Section(SiteMap.Search)?.Url()
+                    ?? home.Children().FirstOrDefault(x => x.ContentType.Alias == DocTypes.SearchPage)?.Url() ?? "/";
+    var siteName = home.Value<string>(Props.SiteName) ?? home.Name;
+    var intro = home.Section(SiteMap.Intro);
+    // Ảnh bìa thẻ: ưu tiên ảnh ngang trong chính chuyên mục, mỗi thẻ một ảnh khác nhau.
+    var usedCovers = new HashSet<string>();
+    var landscapePool = home.Items().Where(x => x.HasLandscapeImage()).ToList();
+    string? PickCover(IPublishedContent section)
+    {
+        var pick = section.Items().Where(x => x.HasLandscapeImage()).FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
+                   ?? landscapePool.FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
+                   ?? section.Items().FirstOrDefault(x => x.ImgKey() != null);
+        if (pick?.ImgKey() is { } key) usedCovers.Add(key);
+        return pick?.Img(640, 480);
+    }
 }
 
 <section class="hero">
     <div class="container hero-inner">
-        <h1>@SiteHelpers.T("Thư viện số Không gian Văn hóa Hồ Chí Minh")</h1>
-        <p>@SiteHelpers.T("Tra cứu sách, tài liệu, hình ảnh, phim và sách nói về cuộc đời, sự nghiệp Chủ tịch Hồ Chí Minh")</p>
-        <form class="hero-search" action="@searchAction" method="get" role="search">
+        <h1>@siteName</h1>
+        <p>@SiteHelpers.T("Tra cứu sách, tài liệu, hình ảnh, phim và sách nói về cuộc đời, sự nghiệp, tư tưởng, đạo đức, phong cách Chủ tịch Hồ Chí Minh")</p>
+        <form class="hero-search" action="@searchUrl" method="get" role="search">
             <input type="search" name="@LibraryQueryKeys.Keyword" placeholder="@SiteHelpers.T("Nhập từ khóa (có dấu hoặc không dấu)...")" aria-label="@SiteHelpers.T("Tìm kiếm")" />
             <select name="@LibraryQueryKeys.Type" aria-label="@SiteHelpers.T("Loại tư liệu")">
                 <option value="">@SiteHelpers.T("Tất cả loại")</option>
@@ -35,85 +39,37 @@
             </select>
             <button type="submit"><i class="fa fa-magnifying-glass"></i> @SiteHelpers.T("Tìm kiếm")</button>
         </form>
+        @if (intro != null) { <a class="hero-more" href="@intro.Url()">@SiteHelpers.T("Giới thiệu Không gian Văn hóa Hồ Chí Minh") <i class="fa fa-arrow-right"></i></a> }
     </div>
 </section>
 
 <div class="container">
-    @if (periods.Any())
-    {
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@library!.Url()">@SiteHelpers.T("Tư liệu theo 5 giai đoạn lịch sử") @SiteHelpers.CountBadge(libraryCount)</a></h2>
-            <ol class="timeline">
-                @foreach (var p in periods)
-                {
-                    <li>
-                        <a href="@p.Url()">
-                            <span class="tl-dot"></span>
-                            <span class="tl-years">@p.YearRange()</span>
-                            <span class="tl-name">@p.Name.Split(':').Last().Trim()</span>
-                        </a>
-                    </li>
-                }
-            </ol>
-        </section>
-    }
-
-    @if (featured.Any())
-    {
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@(library?.Url() ?? "#")">@SiteHelpers.T("Tư liệu nổi bật")</a></h2>
-            <div class="grid g3 featured">
-                @foreach (var x in featured)
-                {
-                    var type = x.ContentType.Alias;
-                    <article class="card">
-                        <a class="thumb" href="@x.Url()">
-                            @if (x.Img(480, 300) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(type)"></i></span> }
-                            <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(type)"></i> @LibraryQuery.TypeLabel(type)</span>
-                        </a>
-                        <h3 class="card-title"><a href="@x.Url()">@x.Name</a></h3>
-                        <div class="lib-meta">@foreach (var p in x.LinkedPeriods()) { <a class="period-chip" href="@p.Url()">@p.YearRange()</a> }</div>
-                    </article>
-                }
-            </div>
-        </section>
-    }
-
-    <div class="media-row2">
-        @if (audios.Any())
-        {
-            <section class="sec">
-                <h2 class="sec-title line"><a href="@searchAction?@LibraryQueryKeys.Type=@DocTypes.Audio">@SiteHelpers.T("Sách nói MP3") @SiteHelpers.CountBadge(counts[DocTypes.Audio])</a></h2>
-                <ul class="audiobook-list">
-                    @foreach (var x in audios)
-                    {
-                        <li>
-                            <a class="ab-title" href="@x.Url()"><i class="fa fa-headphones"></i> @x.Name</a>
-                            <audio controls preload="none" src="@(x.Value<IPublishedContent>(LibraryProps.AudioFile)?.Url())"></audio>
-                        </li>
-                    }
-                </ul>
-            </section>
-        }
-        @if (videos.Any())
-        {
-            <section class="sec">
-                <h2 class="sec-title line"><a href="@searchAction?@LibraryQueryKeys.Type=@DocTypes.Video">@SiteHelpers.T("Phim tư liệu MP4") @SiteHelpers.CountBadge(counts[DocTypes.Video])</a></h2>
-                <div class="film-main">
-                    <video controls preload="metadata" poster="@videos[0].Img(800, 450)" src="@(videos[0].Value<IPublishedContent>(LibraryProps.VideoFile)?.Url())"></video>
-                    <a href="@videos[0].Url()">@videos[0].Name</a>
-                </div>
-                <ul class="film-list">
-                    @foreach (var x in videos.Skip(1)) { <li><a href="@x.Url()"><i class="fa fa-circle-play"></i> @x.Name</a></li> }
-                </ul>
-            </section>
-        }
-    </div>
+    <section class="sec">
+        <h2 class="sec-title line">@SiteHelpers.T("Chuyên mục")</h2>
+        <div class="section-grid">
+            @foreach (var (info, node) in home.Sections())
+            {
+                var cover = PickCover(node);
+                <a class="section-card" href="@node.Url()">
+                    <span class="sc-cover">
+                        @if (cover != null) { <img src="@cover" alt="" loading="lazy" /> }
+                        <span class="sc-icon"><i class="fa @info.Icon"></i></span>
+                        <span class="sc-code">@info.Code</span>
+                    </span>
+                    <span class="sc-body">
+                        <strong class="sc-name">@node.Name</strong>
+                        <span class="sc-desc">@info.Description</span>
+                        <span class="sc-count"><i class="fa fa-layer-group"></i> @node.ItemCount() @SiteHelpers.T("tư liệu")</span>
+                    </span>
+                </a>
+            }
+        </div>
+    </section>
 
     @if (newsItems.Any())
     {
         <section class="sec">
-            <h2 class="sec-title line"><a href="@news!.Url()">@SiteHelpers.T("Tin bài") @SiteHelpers.CountBadge(news.ItemCount())</a></h2>
+            <h2 class="sec-title line"><a href="@news!.Url()">@SiteHelpers.T("Tin tức – Sự kiện – Lịch hoạt động") @SiteHelpers.CountBadge(news.ItemCount())</a></h2>
             <div class="news-grid">
                 @{ var f = newsItems[0]; }
                 <article class="news-big">

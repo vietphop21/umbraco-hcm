@@ -3,7 +3,7 @@ using Umbraco.Extensions;
 
 namespace HcmPortal.Infrastructure;
 
-public record LibraryFilter(string? Keyword, int? PeriodId, string? Type, int? FromYear, int? ToYear);
+public record LibraryFilter(string? Keyword, int? PeriodId, string? Type, int? FromYear, int? ToYear, string? Author = null);
 
 public static class LibraryQuery
 {
@@ -33,8 +33,19 @@ public static class LibraryQuery
     public static IPublishedContent? PeriodOf(this IPublishedContent node)
         => node.AncestorOrSelf(DocTypes.Period);
 
+    /// <summary>Nhánh chủ đề (không có mốc năm) hiển thị nhãn thay cho khoảng năm.</summary>
+    public const string ThemeBranchLabel = "TP.HCM";
+
     public static string YearRange(this IPublishedContent period)
-        => $"{period.Value<int>(LibraryProps.FromYear)}–{period.Value<int>(LibraryProps.ToYear)}";
+    {
+        var from = period.Value<int>(LibraryProps.FromYear);
+        var to = period.Value<int>(LibraryProps.ToYear);
+        return from > 0 ? $"{from}–{to}" : ThemeBranchLabel;
+    }
+
+    /// <summary>Tên ngắn của giai đoạn (bỏ phần mốc năm phía trước dấu ":").</summary>
+    public static string ShortName(this IPublishedContent period)
+        => period.Name.Contains(':') ? period.Name.Split(':', 2)[1].Trim() : period.Name;
 
     public static int Year(this IPublishedContent item)
     {
@@ -76,6 +87,11 @@ public static class LibraryQuery
             items = items.Where(x => x.Year() >= from);
         if (f.ToYear is int to)
             items = items.Where(x => x.Year() <= to);
+        if (!string.IsNullOrWhiteSpace(f.Author))
+        {
+            var author = SiteHelpers.Unaccent(f.Author);
+            items = items.Where(x => SiteHelpers.Unaccent(x.Value<string>(LibraryProps.Author) + " " + x.Value<string>(Props.Source)).Contains(author));
+        }
 
         if (string.IsNullOrWhiteSpace(f.Keyword))
             return items.OrderByDescending(x => x.Date()).ToList();

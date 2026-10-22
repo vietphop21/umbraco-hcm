@@ -24,9 +24,15 @@
                     <button onclick="window.print()" title="@SiteHelpers.T("In bài viết")"><i class="fa fa-print"></i></button>
                     <a href="mailto:?subject=@Uri.EscapeDataString(Model.Name ?? "")&body=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Model.Url())" title="@SiteHelpers.T("Gửi email")"><i class="fa fa-envelope"></i></a>
                     <button onclick="navigator.clipboard.writeText(location.href);this.title='@SiteHelpers.T("Đã sao chép")'" title="@SiteHelpers.T("Sao chép liên kết")"><i class="fa fa-link"></i></button>
+                    <button type="button" data-qr title="@SiteHelpers.T("Mã QR chia sẻ")" aria-label="@SiteHelpers.T("Mã QR chia sẻ")"><i class="fa fa-qrcode"></i></button>
                 </div>
             </div>
 
+            <div class="qr-pop" hidden>
+                <div class="qr-box"></div>
+                <p>@SiteHelpers.T("Quét mã để mở tài liệu trên điện thoại")</p>
+                <button type="button" data-qr-close>@SiteHelpers.T("Đóng")</button>
+            </div>
             <h1>@Model.Name</h1>
             @if (Model.HasValue("summary")) { <p class="detail-sapo">@Model.Value("summary")</p> }
 
@@ -84,6 +90,12 @@
                     </div>
                 }
                 else { <p class="empty">@SiteHelpers.T("Tài liệu đang được cập nhật.")</p> }
+            }
+            @if (Model.Coordinates() is { } pos)
+            {
+                <div class="place-embed">
+                    <iframe src="@SiteHelpers.MapEmbedUrl(pos.Lat, pos.Lng)" title="@SiteHelpers.T("Bản đồ") @Model.Name" loading="lazy"></iframe>
+                </div>
             }
             @{ var linkedPeriods = Model.LinkedPeriods().ToList(); }
             @if (linkedPeriods.Any())

@@ -86,11 +86,43 @@
         try { localStorage.setItem(s.zoomKey, z); } catch (e) { }
     }
     render(current());
+
+    var contrastBtn = fab.querySelector('[data-a11y="contrast"]');
+    var speakBtn = fab.querySelector('[data-a11y="speak"]');
+    function setContrast(on) {
+        if (on) d.dataset.contrast = 'high'; else delete d.dataset.contrast;
+        contrastBtn.setAttribute('aria-pressed', on);
+        try { localStorage.setItem(s.contrastKey, on ? '1' : '0'); } catch (e) { }
+    }
+    contrastBtn.setAttribute('aria-pressed', d.dataset.contrast === 'high');
+
+    // Đọc văn bản bằng giọng nói (Web Speech API của trình duyệt, giọng tiếng Việt)
+    var synth = window.speechSynthesis;
+    if (!synth) speakBtn.hidden = true;
+    function stopSpeak() { synth.cancel(); speakBtn.setAttribute('aria-pressed', false); }
+    function speak() {
+        if (synth.speaking) { stopSpeak(); return; }
+        var src = document.getElementById('detail-body') || document.querySelector('.site-main');
+        var title = document.querySelector('.site-main h1');
+        var text = ((title ? title.innerText + '. ' : '') + (src ? src.innerText : '')).trim();
+        if (!text) return;
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = s.lang;
+        var voice = synth.getVoices().filter(function (v) { return v.lang === s.lang; })[0];
+        if (voice) u.voice = voice;
+        u.onend = stopSpeak;
+        speakBtn.setAttribute('aria-pressed', true);
+        synth.speak(u);
+    }
+
     fab.addEventListener('click', function (e) {
         var b = e.target.closest('[data-a11y]');
         if (!b) return;
         var a = b.dataset.a11y;
-        if (a === 'zoom-in') setZoom(current() + step);
+        if (a === 'toggle') b.setAttribute('aria-expanded', fab.classList.toggle('open'));
+        else if (a === 'contrast') setContrast(d.dataset.contrast !== 'high');
+        else if (a === 'speak') speak();
+        else if (a === 'zoom-in') setZoom(current() + step);
         else if (a === 'zoom-out') setZoom(current() - step);
         else if (a === 'zoom-reset') setZoom(min);
     });
@@ -142,4 +174,38 @@
     }).catch(function () {
         stage.innerHTML = '<p class="flipbook-status">' + box.dataset.error + '</p>';
     });
+})();
+
+// Mã QR chia sẻ trang tài liệu, tạo phía trình duyệt
+(function () {
+    var btn = document.querySelector('[data-qr]');
+    var pop = document.querySelector('.qr-pop');
+    if (!btn || !pop || !window.QRCode) return;
+    var box = pop.querySelector('.qr-box'), made = false;
+    btn.addEventListener('click', function () {
+        if (!made) { new QRCode(box, { text: location.href, width: 180, height: 180 }); made = true; }
+        pop.hidden = !pop.hidden;
+    });
+    pop.querySelector('[data-qr-close]').addEventListener('click', function () { pop.hidden = true; });
+})();
+
+// Bản đồ số: cắm ghim các địa danh (Leaflet + OpenStreetMap)
+(function () {
+    var el = document.getElementById('place-map');
+    if (!el || !window.L) return;
+    var places = JSON.parse(el.dataset.places || '[]');
+    var map = L.map(el, { scrollWheelZoom: false }).setView([+el.dataset.lat, +el.dataset.lng], +el.dataset.zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    var bounds = [];
+    places.forEach(function (p) {
+        var html = (p.img ? '<img src="' + p.img + '" alt="" style="width:100%;border-radius:4px;margin-bottom:6px">' : '')
+            + '<strong>' + esc(p.name) + '</strong><p style="margin:4px 0">' + esc(p.summary) + '</p>'
+            + '<a href="' + p.url + '">Xem chi tiết »</a>';
+        L.marker([p.lat, p.lng]).addTo(map).bindPopup(html, { maxWidth: 260 });
+        bounds.push([p.lat, p.lng]);
+    });
+    if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
 })();

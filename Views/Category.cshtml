@@ -24,6 +24,31 @@
                 }
             </div>
             @if (Model.HasValue("description")) { <p class="cat-desc">@Model.Value("description")</p> }
+            @if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Map)
+            {
+                var places = all.Select(x => (x, c: x.Coordinates())).Where(t => t.c != null)
+                    .Select(t => new { name = t.x.Name, url = t.x.Url(), summary = t.x.Value<string>(Props.Summary), img = t.x.Img(320, 200), lat = t.c!.Value.Lat, lng = t.c!.Value.Lng })
+                    .ToList();
+                <div id="place-map" class="place-map" data-places='@System.Text.Json.JsonSerializer.Serialize(places)'
+                     data-lat="@MapProps.DefaultLat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-lng="@MapProps.DefaultLng.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-zoom="@MapProps.DefaultZoom" aria-label="@SiteHelpers.T("Bản đồ số")"></div>
+            }
+            @if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Life && Model.LibraryRoot() is { } tree)
+            {
+                var periodsOfTree = tree.Periods().ToList();
+                <section class="milestones" aria-label="@SiteHelpers.T("Dòng thời gian")">
+                    <h2 class="sec-title line">@SiteHelpers.T("Dòng thời gian")</h2>
+                    <ol class="timeline timeline-8">
+                        @foreach (var y in SiteMap.Milestones)
+                        {
+                            var p = periodsOfTree.FirstOrDefault(x => x.Value<int>(LibraryProps.FromYear) <= y && y <= x.Value<int>(LibraryProps.ToYear));
+                            <li><a href="@(p?.Url() ?? tree.Url())"><span class="tl-dot"></span><span class="tl-years">@y</span><span class="tl-name">@(p?.ShortName())</span></a></li>
+                        }
+                    </ol>
+                    <a class="tree-link" href="@tree.Url()"><i class="fa fa-sitemap"></i> @SiteHelpers.T("Xem cây thư mục 5 giai đoạn lịch sử")</a>
+                </section>
+            }
 
             @if (isMuseum)
             {
@@ -45,7 +70,7 @@
             {
                 @foreach (var x in items)
                 {
-                    var img = x.Img(360, 240);
+                    var img = x.ImgFull(480);
                     var icon = x.ContentType.Alias switch { "videoItem" => "fa-play", "photoAlbum" => "fa-camera", "audioItem" => "fa-volume-high", _ => null };
                     <article class="list-item">
                         <h3><a href="@x.Url()">@x.Name</a></h3>
