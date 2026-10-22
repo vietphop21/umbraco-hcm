@@ -89,7 +89,9 @@
             </ul>
             <div class="nav-tools">
                 <button class="nav-btn menu-toggle-btn" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')"><i class="fa fa-bars"></i></button>
+                @* Tạm ẩn nút đổi ngôn ngữ cho tới khi bản tiếng Anh có đủ nội dung
                 <a class="nav-btn lang-btn" href="@Model.SwitchLanguageUrl(home)" hreflang="@SiteHelpers.OtherCulture" title="@SiteHelpers.T("Chuyển sang tiếng Anh")">@SiteHelpers.OtherLabel</a>
+                *@
                 <button class="nav-btn theme-btn" type="button" data-storage-key="@Theme.StorageKey" data-dark="@Theme.Dark" data-light="@Theme.Light" aria-label="@SiteHelpers.T("Chế độ sáng/tối")" title="@SiteHelpers.T("Chế độ sáng/tối")"><i class="fa fa-moon"></i><i class="fa fa-sun"></i></button>
                 <button class="nav-btn search-btn" aria-label="@SiteHelpers.T("Tìm kiếm")" onclick="document.body.classList.toggle('search-open');document.querySelector('.search-drop input').focus()"><i class="fa fa-search"></i></button>
             </div>
