@@ -15,11 +15,11 @@
     <div class="two-col">
         <div class="main-list">
             <div class="cat-head">
-                <h1 class="sec-title line"><a href="@Model.Url()">@Model.Name</a></h1>
+                <h1 class="sec-title line"><a href="@Model.Url()">@Model.Name @SiteHelpers.CountBadge(all.Count)</a></h1>
                 @if (subs.Any())
                 {
                     <ul class="cat-subs">
-                        @foreach (var s in subs) { <li><a href="@s.Url()">@s.Name</a></li> }
+                        @foreach (var s in subs) { <li><a href="@s.Url()">@s.Name @SiteHelpers.CountBadge(s.ItemCount())</a></li> }
                     </ul>
                 }
             </div>

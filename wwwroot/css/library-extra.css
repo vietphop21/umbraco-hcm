@@ -1,0 +1,35 @@
+/* Số bài trên menu header, vd. TIN TỨC (40) */
+.menu-count { font-weight: 400; font-size: .85em; opacity: .8; text-transform: none; }
+.menu .sub .menu-count { color: var(--muted); opacity: 1; }
+
+/* ================= CHẾ ĐỘ TỐI: THƯ VIỆN SỐ ================= */
+[data-theme="dark"] .lib-tree, [data-theme="dark"] .lib-filter { background: var(--surface); border-color: var(--line); border-top-color: var(--red); }
+[data-theme="dark"] .lib-tree ul ul { border-left-color: var(--line); }
+[data-theme="dark"] .lib-tree a { color: var(--text); }
+[data-theme="dark"] .lib-tree a:hover { background: var(--surface-2); }
+[data-theme="dark"] .lib-tree a.current { background: var(--red); color: #fff; }
+[data-theme="dark"] .lib-desc, [data-theme="dark"] .tl-name, [data-theme="dark"] .stat span { color: #b9b9b9; }
+[data-theme="dark"] .timeline li.active .tl-name { color: #ff8a8a; }
+[data-theme="dark"] .tl-dot { background: var(--bg); }
+[data-theme="dark"] .timeline li.active .tl-dot, [data-theme="dark"] .timeline li a:hover .tl-dot { background: var(--gold); }
+[data-theme="dark"] .tl-years { color: #ff6b6b; }
+[data-theme="dark"] .stat { background: var(--surface); border-color: var(--line); }
+[data-theme="dark"] .stat strong { color: #ff8a8a; }
+[data-theme="dark"] .stat.total { background: var(--red); border-color: var(--red); }
+[data-theme="dark"] .stat.total strong, [data-theme="dark"] .stat.total span { color: #fff; }
+[data-theme="dark"] .type-chips a { border-color: var(--line); color: var(--text); }
+[data-theme="dark"] .type-chips a span { background: var(--surface-2); color: var(--text); }
+[data-theme="dark"] .type-chips a.active { background: var(--red); border-color: var(--red); color: #fff; }
+[data-theme="dark"] .period-chip { background: #3a1b1d; color: #ff9a9a; }
+[data-theme="dark"] .lib-item { border-bottom-color: var(--line); }
+[data-theme="dark"] .lib-item h3 a, [data-theme="dark"] .card-title a { color: var(--text); }
+[data-theme="dark"] .hero-search { background: var(--surface); }
+[data-theme="dark"] .hero-search input { background: var(--surface); color: var(--text); }
+[data-theme="dark"] .hero-search select { background: var(--surface-2); color: var(--text); border-left-color: var(--line); }
+[data-theme="dark"] .audiobook-list li, [data-theme="dark"] .film-list li { border-bottom-color: var(--line); }
+[data-theme="dark"] .flipbook { background: #0d0d0f; }
+
+/* Khung đọc PDF luôn nằm gọn trong cột nội dung */
+.detail { min-width: 0; }
+.flipbook { max-width: 100%; overflow: hidden; }
+.flipbook-stage, .flipbook-stage > div { max-width: 100%; }

@@ -20,7 +20,7 @@
     {
         var items = videos.Items(4).ToList();
         <section class="sec">
-            <h2 class="sec-title line"><a href="@videos.Url()">@videos.Name</a></h2>
+            <h2 class="sec-title line"><a href="@videos.Url()">@videos.Name @SiteHelpers.CountBadge(videos.ItemCount())</a></h2>
             @if (items.Any())
             {
                 <article class="item-v">
@@ -37,7 +37,7 @@
     @if (photos != null)
     {
         <section class="sec">
-            <h2 class="sec-title line"><a href="@photos.Url()">@photos.Name</a></h2>
+            <h2 class="sec-title line"><a href="@photos.Url()">@photos.Name @SiteHelpers.CountBadge(photos.ItemCount())</a></h2>
             @foreach (var x in photos.Items(3))
             {
                 <article class="item-h">@Thumb(x, 200, 125, "fa-camera")<h3><a href="@x.Url()">@x.Name</a></h3></article>
@@ -47,7 +47,7 @@
     @if (audios != null)
     {
         <section class="sec">
-            <h2 class="sec-title line"><a href="@audios.Url()">@audios.Name</a></h2>
+            <h2 class="sec-title line"><a href="@audios.Url()">@audios.Name @SiteHelpers.CountBadge(audios.ItemCount())</a></h2>
             @foreach (var x in audios.Items(4))
             {
                 <article class="item-h">@Thumb(x, 200, 125, "fa-volume-high")<h3><a href="@x.Url()">@x.Name</a></h3></article>

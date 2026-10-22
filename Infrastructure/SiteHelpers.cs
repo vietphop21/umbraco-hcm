@@ -6,7 +6,7 @@ namespace HcmPortal.Infrastructure;
 
 public static class SiteHelpers
 {
-    public static readonly string[] ItemTypes = { DocTypes.Article, DocTypes.Video, DocTypes.Album, DocTypes.Audio };
+    public static readonly string[] ItemTypes = { DocTypes.Article, DocTypes.Video, DocTypes.Album, DocTypes.Audio, DocTypes.PdfDocument };
 
     /// <summary>Bản tiếng Anh nằm dưới /en; còn lại là tiếng Việt.</summary>
     public static bool IsEn =>
@@ -35,6 +35,12 @@ public static class SiteHelpers
                 .OrderByDescending(x => x.Date())
                 .Take(take);
 
+    /// <summary>Tổng số bài (mọi loại) trong chuyên mục, gồm cả chuyên mục con.</summary>
+    public static int ItemCount(this IPublishedContent? section) => section.Items().Count();
+
+    public static Microsoft.AspNetCore.Html.IHtmlContent CountBadge(int count)
+        => new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"item-count\">({count:N0})</span>");
+
     public static DateTime Date(this IPublishedContent item)
     {
         var d = item.Value<DateTime>("publishDate");
@@ -54,7 +60,7 @@ public static class SiteHelpers
         => home.Value<IPublishedContent>(alias);
 
     public static bool InMenu(this IPublishedContent x)
-        => x.ContentType.Alias == "category" && !x.Value<bool>("umbracoNaviHide");
+        => x.ContentType.Alias is DocTypes.Category or DocTypes.LibraryRoot && !x.Value<bool>(LibraryProps.Hide);
 
     public static IEnumerable<IPublishedContent> MenuChildren(this IPublishedContent x)
         => x.Children().Where(InMenu);
