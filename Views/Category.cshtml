@@ -2,6 +2,9 @@
 @{
     Layout = "Master.cshtml";
     const int pageSize = 12;
+    const int RelatedFillThreshold = 6;
+    const int RelatedCount = 6;
+    const int RelatedColumns = 3;
     int.TryParse(Context.Request.Query["page"], out var page);
 
     var isMuseum = Model.Children().Any(x => x.ContentType.Alias == "museumItem");
@@ -74,11 +77,14 @@
                     var icon = x.ContentType.Alias switch { "videoItem" => "fa-play", "photoAlbum" => "fa-camera", "audioItem" => "fa-volume-high", _ => null };
                     <article class="list-item">
                         <h3><a href="@x.Url()">@x.Name</a></h3>
-                        <div class="list-row">
-                            <a class="thumb" href="@x.Url()">
-                                @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
-                                @if (icon != null) { <span class="ico"><i class="fa @icon"></i></span> }
-                            </a>
+                        <div class="list-row@(img == null && icon == null ? " no-thumb" : "")">
+                            @if (img != null || icon != null)
+                            {
+                                <a class="thumb" href="@x.Url()">
+                                    @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @icon"></i></span> }
+                                    @if (icon != null) { <span class="ico"><i class="fa @icon"></i></span> }
+                                </a>
+                            }
                             <div class="list-text">
                                 <time>@x.DateText()</time>
                                 <p class="sapo">@x.Value("summary")</p>
@@ -89,8 +95,36 @@
                 }
                 @if (!all.Any()) { <p class="empty">@SiteHelpers.T("Chuyên mục chưa có bài viết.")</p> }
                 <partial name="Site/Pager" model="(page, totalPages, string.Empty)" />
+
+                @* Chuyên mục ít bài: gợi ý tư liệu từ các chuyên mục cùng cấp để người xem có bước tiếp theo. *@
+                @if (page == 1 && all.Count < RelatedFillThreshold)
+                {
+                    var own = all.Select(x => x.Id).ToHashSet();
+                    var source = Model.Parent?.ContentType.Alias == DocTypes.Category ? Model.Parent : Model.Root();
+                    var pool = source.Items().Where(x => !own.Contains(x.Id)).Take(RelatedCount).ToList();
+                    var related = pool.Take(pool.Count >= RelatedColumns ? pool.Count / RelatedColumns * RelatedColumns : pool.Count).ToList();
+                    if (related.Any())
+                    {
+                        <section class="related-fill">
+                            <h2 class="sec-title line">@SiteHelpers.T("Tư liệu liên quan")</h2>
+                            <div class="grid g3">
+                                @foreach (var x in related)
+                                {
+                                    <article class="item-v">
+                                        <a class="thumb" href="@x.Url()">
+                                            @if (x.Img(400, 260) is string rimg) { <img src="@rimg" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i></span> }
+                                            <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i> @LibraryQuery.TypeLabel(x.ContentType.Alias)</span>
+                                        </a>
+                                        <h3><a href="@x.Url()">@x.Name</a></h3>
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    }
+                }
             }
         </div>
         <partial name="Site/Sidebar" />
     </div>
 </div>
+<partial name="Site/OtherSections" />

@@ -1,57 +1,54 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@*
+    Cột phải dùng chung: Phim tư liệu, Hình ảnh tư liệu, Sách nói (theo cấu hình node Trang chủ) và lối tắt tới các chức năng chính.
+    Giữ gọn để cột phải không dài hơn nhiều so với nội dung chính.
+*@
 @{
-    // Cột phải dùng chung: Tư liệu Video / Ảnh / Audio (lấy theo cấu hình ở node Trang chủ)
-    var home = Model.Root();
-    var videos = home.Picked("videoSection");
-    var photos = home.Picked("photoSection");
-    var audios = home.Picked("audioSection");
+    const int VideoCount = 3;
+    const int PhotoCount = 2;
+    const int AudioCount = 3;
 
-    IHtmlContent Thumb(IPublishedContent x, int w, int h, string icon)
+    var home = Model.Root();
+    var blocks = new (IPublishedContent? Section, int Count, string Icon)[]
     {
-        var img = x.Img(w, h);
-        var inner = img != null
-            ? $"<img src=\"{img}\" alt=\"{System.Net.WebUtility.HtmlEncode(x.Name)}\" loading=\"lazy\" />"
-            : "<span class=\"noimg\"><i class=\"fa fa-image\"></i></span>";
-        return new HtmlString($"<a class=\"thumb\" href=\"{x.Url()}\">{inner}<span class=\"ico\"><i class=\"fa {icon}\"></i></span></a>");
-    }
+        (home.Picked("videoSection"), VideoCount, "fa-play"),
+        (home.Picked("photoSection"), PhotoCount, "fa-camera"),
+        (home.Picked("audioSection"), AudioCount, "fa-volume-high"),
+    };
+    var shortcuts = new (string UrlName, string Label, string Icon)[]
+    {
+        (SiteMap.Search, "Tra cứu đa tiêu chí", "fa-magnifying-glass"),
+        (SiteMap.Periods, "Cây thư mục giai đoạn", "fa-sitemap"),
+        (SiteMap.Media, "Thư viện tư liệu số", "fa-photo-film"),
+        (SiteMap.Map, "Bản đồ số", "fa-map-location-dot"),
+    };
+    string? ShortcutUrl(string urlName) => urlName == SiteMap.Periods ? home.LibraryRoot()?.Url() : home.Section(urlName)?.Url();
 }
 <aside class="side-col">
-    @if (videos != null)
+    <nav class="side-shortcuts" aria-label="@SiteHelpers.T("Lối tắt")">
+        @foreach (var (urlName, label, icon) in shortcuts)
+        {
+            if (ShortcutUrl(urlName) is string url) { <a href="@url"><i class="fa @icon"></i> @SiteHelpers.T(label)</a> }
+        }
+    </nav>
+    @foreach (var (block, count, icon) in blocks)
     {
-        var items = videos.Items(4).ToList();
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@videos.Url()">@videos.Name @SiteHelpers.CountBadge(videos.ItemCount())</a></h2>
-            @if (items.Any())
+        if (block == null) { continue; }
+        var items = block.Items(count).ToList();
+        if (!items.Any()) { continue; }
+        <section class="side-block">
+            <h2 class="sec-title line"><a href="@block.Url()">@block.Name @SiteHelpers.CountBadge(block.ItemCount())</a></h2>
+            @foreach (var x in items)
             {
-                <article class="item-v">
-                    @Thumb(items[0], 480, 300, "fa-play")
-                    <h3><a href="@items[0].Url()">@items[0].Name</a></h3>
+                <article class="side-item">
+                    <a class="side-thumb" href="@x.Url()">
+                        @if (x.Img(192, 128) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @icon"></i></span> }
+                        <span class="side-ico"><i class="fa @icon"></i></span>
+                    </a>
+                    <h3><a href="@x.Url()">@x.Name</a></h3>
                 </article>
             }
-            @foreach (var x in items.Skip(1))
-            {
-                <article class="item-h">@Thumb(x, 200, 125, "fa-play")<h3><a href="@x.Url()">@x.Name</a></h3></article>
-            }
-        </section>
-    }
-    @if (photos != null)
-    {
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@photos.Url()">@photos.Name @SiteHelpers.CountBadge(photos.ItemCount())</a></h2>
-            @foreach (var x in photos.Items(3))
-            {
-                <article class="item-h">@Thumb(x, 200, 125, "fa-camera")<h3><a href="@x.Url()">@x.Name</a></h3></article>
-            }
-        </section>
-    }
-    @if (audios != null)
-    {
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@audios.Url()">@audios.Name @SiteHelpers.CountBadge(audios.ItemCount())</a></h2>
-            @foreach (var x in audios.Items(4))
-            {
-                <article class="item-h">@Thumb(x, 200, 125, "fa-volume-high")<h3><a href="@x.Url()">@x.Name</a></h3></article>
-            }
+            <a class="side-more" href="@block.Url()">@SiteHelpers.T("Xem tất cả") <i class="fa fa-angle-right"></i></a>
         </section>
     }
 </aside>

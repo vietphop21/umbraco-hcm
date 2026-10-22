@@ -69,13 +69,9 @@ public static class SeedArticles
     public static readonly Dictionary<string, string> MuseumQuery = new()
     {
         ["Khu di tích Phủ Chủ tịch"] = "Presidential Palace",
-        ["Khu di tích Kim Liên"] = "stilt house",
+        ["Khu di tích Kim Liên"] = "Kim Lien",
         ["Khu di tích Bến Nhà Rồng"] = "Bến Nhà Rồng",
         ["Khu di tích Pác Bó"] = "Cốc Bó",
-        ["Khu di tích ATK Định Hóa"] = "house",
-        ["Khu di tích Tân Trào"] = "Đền thờ",
         ["Bảo tàng Hồ Chí Minh"] = "Museum",
-        ["Khu di tích K9"] = "Stilt House",
-        ["Nhà lưu niệm tại Huế"] = "Mausoleum",
     };
 }

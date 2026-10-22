@@ -31,7 +31,11 @@ public static class LibraryQuery
         => period.Children().Where(x => x.ContentType.Alias == DocTypes.PeriodTopic && !x.Value<bool>(LibraryProps.Hide));
 
     public static IPublishedContent? PeriodOf(this IPublishedContent node)
-        => node.AncestorOrSelf(DocTypes.Period);
+    {
+        for (var n = node; n != null; n = n.Parent)
+            if (n.ContentType.Alias == DocTypes.Period) return n;
+        return null;
+    }
 
     /// <summary>Nhánh chủ đề (không có mốc năm) hiển thị nhãn thay cho khoảng năm.</summary>
     public const string ThemeBranchLabel = "TP.HCM";

@@ -14,14 +14,16 @@
                     ?? home.Children().FirstOrDefault(x => x.ContentType.Alias == DocTypes.SearchPage)?.Url() ?? "/";
     var siteName = home.Value<string>(Props.SiteName) ?? home.Name;
     var intro = home.Section(SiteMap.Intro);
-    // Ảnh bìa thẻ: ưu tiên ảnh ngang trong chính chuyên mục, mỗi thẻ một ảnh khác nhau.
+    // Ảnh bìa thẻ lấy từ tư liệu của chính chuyên mục và phải cùng chủ đề với tên chuyên mục; không có thì dùng nền trung tính.
     var usedCovers = new HashSet<string>();
-    var landscapePool = home.Items().Where(x => x.HasLandscapeImage()).ToList();
     string? PickCover(IPublishedContent section)
     {
-        var pick = section.Items().Where(x => x.HasLandscapeImage()).FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
-                   ?? landscapePool.FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
-                   ?? section.Items().FirstOrDefault(x => x.ImgKey() != null);
+        var own = section.Items()
+            .Where(x => x.ImgKey() != null && HcmPortal.Setup.ImageRelevance.Fits(section.Name, x.Value<IPublishedContent>(LibraryProps.Thumbnail)?.Name))
+            .ToList();
+        var pick = own.Where(x => x.HasLandscapeImage()).FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
+                   ?? own.FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
+                   ?? own.FirstOrDefault();
         if (pick?.ImgKey() is { } key) usedCovers.Add(key);
         return pick?.Img(640, 480);
     }
@@ -52,14 +54,14 @@
                 var cover = PickCover(node);
                 <a class="section-card" href="@node.Url()">
                     <span class="sc-cover">
-                        @if (cover != null) { <img src="@cover" alt="" loading="lazy" /> }
-                        <span class="sc-icon"><i class="fa @info.Icon"></i></span>
+                        @if (cover != null) { <img src="@cover" alt="" loading="lazy" /> } else { <span class="noimg"><i class="fa @info.Icon"></i></span> }
                         <span class="sc-code">@info.Code</span>
                     </span>
                     <span class="sc-body">
                         <strong class="sc-name">@node.Name</strong>
                         <span class="sc-desc">@info.Description</span>
-                        <span class="sc-count"><i class="fa fa-layer-group"></i> @node.ItemCount() @SiteHelpers.T("tư liệu")</span>
+                        @if (node.ContentType.Alias == DocTypes.TextPage) { <span class="sc-count sc-more">@SiteHelpers.T("Xem giới thiệu") <i class="fa fa-arrow-right"></i></span> }
+                        else { <span class="sc-count"><i class="fa fa-layer-group"></i> @node.ItemCount() @SiteHelpers.T("tư liệu")</span> }
                     </span>
                 </a>
             }
@@ -72,8 +74,9 @@
             <h2 class="sec-title line"><a href="@news!.Url()">@SiteHelpers.T("Tin tức – Sự kiện – Lịch hoạt động") @SiteHelpers.CountBadge(news.ItemCount())</a></h2>
             <div class="news-grid">
                 @{ var f = newsItems[0]; }
-                <article class="news-big">
-                    <a class="thumb" href="@f.Url()">@if (f.Img(760, 480) is string fi) { <img src="@fi" alt="@f.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-newspaper"></i></span> }</a>
+                @{ var fi = f.Img(760, 480); }
+                <article class="news-big@(fi == null ? " no-thumb" : "")">
+                    @if (fi != null) { <a class="thumb" href="@f.Url()"><img src="@fi" alt="@f.Name" loading="lazy" /></a> }
                     <h3><a href="@f.Url()">@f.Name</a></h3>
                     <p class="sapo">@f.Value(Props.Summary)</p>
                     <time>@f.Date().ToString("dd/MM/yyyy")</time>
@@ -89,6 +92,7 @@
                     }
                 </div>
             </div>
+            <a class="sec-more" href="@news!.Url()">@SiteHelpers.T("Xem tất cả tin tức") <i class="fa fa-arrow-right"></i></a>
         </section>
     }
 </div>

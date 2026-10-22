@@ -325,7 +325,7 @@ public static class SeedData
             if (i == 3) sb.Append($"<h3>{SubHeadings[rnd.Next(SubHeadings.Length)]}</h3>");
             sb.Append($"<p>{paras[i]}</p>");
             if (i == 1) sb.Append($"<div class=\"note-box\">{pool[(i + 3) % pool.Length]}</div>");
-            if (i == 2) sb.Append("<figure><img src=\"{IMG}\" alt=\"Ảnh minh họa\" /><figcaption>Ảnh minh họa cho bài viết (ảnh demo).</figcaption></figure>");
+            if (i == 2) sb.Append("<figure><img src=\"{IMG}\" alt=\"Ảnh minh họa\" /><figcaption>Ảnh minh họa.</figcaption></figure>");
         }
         return sb.ToString();
     }

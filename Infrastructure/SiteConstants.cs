@@ -50,6 +50,10 @@ public record SiteSection(string Code, string Name, string MenuName, string UrlN
 public static class SiteMap
 {
     public const string UrlNameProp = "umbracoUrlName";
+
+    /// <summary>Đơn vị thực hiện CSDL chuyên đề (theo Đề xuất site map 21/10/2026).</summary>
+    public const string OrgName = "Thư viện Khoa học Tổng hợp TP. Hồ Chí Minh";
+    public const string Copyright = "Bản quyền thuộc " + OrgName + ". Ghi rõ nguồn khi phát hành lại thông tin từ cơ sở dữ liệu này.";
     public const string Intro = "gioi-thieu";
     public const string Life = "cuoc-doi-su-nghiep";
     public const string Thought = "tu-tuong-dao-duc-phong-cach";

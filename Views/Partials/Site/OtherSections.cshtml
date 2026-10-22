@@ -1,0 +1,14 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    var path = Model.Path.Split(',');
+    var others = Model.Sections().Where(s => !path.Contains(s.Node.Id.ToString())).ToList();
+}
+@if (others.Any())
+{
+    <nav class="container other-sections" aria-label="@SiteHelpers.T("Chuyên mục khác")">
+        <h2 class="sec-title line">@SiteHelpers.T("Chuyên mục khác")</h2>
+        <div class="chips">
+            @foreach (var (info, node) in others) { <a href="@node.Url()"><i class="fa @info.Icon"></i> @SiteHelpers.T(info.MenuName)</a> }
+        </div>
+    </nav>
+}

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using HcmPortal.Infrastructure;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Events;
@@ -46,32 +47,32 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
         [SiteMap.Saigon] = new[]
         {
             ("Bến Nhà Rồng – điểm khởi đầu hành trình cứu nước", "Di tích lịch sử gắn với ngày 5/6/1911, nay là Bảo tàng Hồ Chí Minh – chi nhánh TP. Hồ Chí Minh."),
-            ("Thành phố mang tên Bác", "Hành trình xây dựng và phát triển của Thành phố vinh dự mang tên Chủ tịch Hồ Chí Minh (bản demo)."),
+            ("Thành phố mang tên Bác", "Hành trình xây dựng và phát triển của Thành phố vinh dự mang tên Chủ tịch Hồ Chí Minh."),
         },
         [SiteMap.Works] = new[]
         {
-            ("Giới thiệu các tác phẩm tiêu biểu", "Tổng quan các tác phẩm, bài viết, bài nói tiêu biểu của Chủ tịch Hồ Chí Minh (bản demo)."),
-            ("Hướng dẫn tra cứu tác phẩm trong Tủ sách điện tử", "Cách tìm và đọc trực tuyến các tác phẩm đã số hóa (bản demo)."),
+            ("Giới thiệu các tác phẩm tiêu biểu", "Tổng quan các tác phẩm, bài viết, bài nói tiêu biểu của Chủ tịch Hồ Chí Minh."),
+            ("Hướng dẫn tra cứu tác phẩm trong Tủ sách điện tử", "Cách tìm và đọc trực tuyến các tác phẩm đã số hóa."),
         },
         [SiteMap.Kids] = new[]
         {
-            ("Chuyện kể: Bác Hồ với các cháu thiếu nhi", "Những câu chuyện giản dị, gần gũi dành cho các em (bản demo)."),
-            ("Đố vui: Em yêu Bác Hồ", "Khu vực nhúng trò chơi đố vui, ghép hình do cán bộ thư viện tạo sẵn (bản demo)."),
+            ("Chuyện kể: Bác Hồ với các cháu thiếu nhi", "Những câu chuyện giản dị, gần gũi dành cho các em."),
+            ("Đố vui: Em yêu Bác Hồ", "Khu vực nhúng trò chơi đố vui, ghép hình do cán bộ thư viện tạo sẵn."),
         },
         [SiteMap.Sectors] = new[]
         {
-            ("Bác Hồ với ngành giáo dục", "Những lời dạy của Bác đối với thầy giáo, học sinh (bản demo)."),
-            ("Bác Hồ với ngành y tế", "Tình cảm và lời căn dặn của Bác với đội ngũ thầy thuốc (bản demo)."),
+            ("Bác Hồ với ngành giáo dục", "Những lời dạy của Bác đối với thầy giáo, học sinh."),
+            ("Bác Hồ với ngành y tế", "Tình cảm và lời căn dặn của Bác với đội ngũ thầy thuốc."),
         },
         [SiteMap.Documents] = new[]
         {
-            ("Hướng dẫn học tập chuyên đề năm 2026", "Văn bản hướng dẫn tổ chức học tập chuyên đề (bản demo, tệp PDF đính kèm sau)."),
-            ("Kế hoạch tuyên truyền các ngày lễ lớn", "Kế hoạch tuyên truyền kỷ niệm các ngày lễ lớn trong năm (bản demo)."),
+            ("Hướng dẫn học tập chuyên đề năm 2026", "Văn bản hướng dẫn tổ chức học tập chuyên đề."),
+            ("Kế hoạch tuyên truyền các ngày lễ lớn", "Kế hoạch tuyên truyền kỷ niệm các ngày lễ lớn trong năm."),
         },
         [SiteMap.Map] = new[]
         {
-            ("Khu di tích Kim Liên (Nghệ An)", "Quê nội, quê ngoại của Chủ tịch Hồ Chí Minh (bản demo, tọa độ bổ sung sau)."),
-            ("Khu di tích Pác Bó (Cao Bằng)", "Nơi Bác sống và làm việc khi trở về nước năm 1941 (bản demo, tọa độ bổ sung sau)."),
+            ("Khu di tích Kim Liên (Nghệ An)", "Quê nội, quê ngoại của Chủ tịch Hồ Chí Minh ."),
+            ("Khu di tích Pác Bó (Cao Bằng)", "Nơi Bác sống và làm việc khi trở về nước năm 1941 ."),
         },
     };
 
@@ -89,11 +90,13 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
     private readonly Umbraco.Cms.Core.PropertyEditors.MediaUrlGeneratorCollection _urlGenerators;
     private readonly IContentTypeBaseServiceProvider _typeProvider;
     private readonly IWebHostEnvironment _env;
+    private readonly Umbraco.Cms.Core.Cache.DistributedCache _distributedCache;
 
     public SiteMapSetupHandler(IContentTypeService contentTypes, IDataTypeService dataTypes, IContentService content,
         IMediaService media, Umbraco.Cms.Core.IO.MediaFileManager mediaFiles,
         Umbraco.Cms.Core.PropertyEditors.MediaUrlGeneratorCollection urlGenerators, IContentTypeBaseServiceProvider typeProvider,
-        IWebHostEnvironment env, IShortStringHelper sh, IRuntimeState runtime, ILogger<SiteMapSetupHandler> logger)
+        IWebHostEnvironment env, IShortStringHelper sh, IRuntimeState runtime, ILogger<SiteMapSetupHandler> logger,
+        Umbraco.Cms.Core.Cache.DistributedCache distributedCache)
     {
         _media = media;
         _mediaFiles = mediaFiles;
@@ -106,6 +109,7 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
         _sh = sh;
         _runtime = runtime;
         _logger = logger;
+        _distributedCache = distributedCache;
     }
 
     public void Handle(UnattendedInstallNotification notification) => Run();
@@ -127,10 +131,14 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
             EnsureSections(home);
             EnsureSearchPage(home);
             EnsurePeriods(home);
+            EnsureCleanContent(home);
+            EnsureContextParagraphs(home);
             EnsureBanner(home);
             EnsureEDocuments(home);
             EnsureMapPlaces(home);
-            EnsureThumbnails(home);
+            EnsureRelevantImages(home);
+            // uSync nhập lại nội dung lúc khởi động có thể để cache published lệch với DB; nạp lại để trang hiển thị đúng dữ liệu đã rà soát.
+            _distributedCache.RefreshAllPublishedSnapshot();
         }
         catch (Exception ex)
         {
@@ -271,7 +279,7 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
         var c = _content.Create(title, parent.Id, DocTypes.Article);
         SetName(c, title);
         Set(c, Props.Summary, summary);
-        Set(c, Props.BodyText, $"<p>{summary}</p><p>Nội dung chi tiết sẽ được Ban biên tập cập nhật.</p>");
+        Set(c, Props.BodyText, $"<p>{summary}</p>");
         Set(c, "publishDate", DateTime.Now);
         if (year > 0) Set(c, LibraryProps.EventYear, year);
         Publish(c);
@@ -314,7 +322,7 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
                 node = _content.Create(title, map.Id, DocTypes.Article);
                 SetName(node, title);
                 Set(node, Props.Summary, summary);
-                Set(node, Props.BodyText, $"<p>{summary}</p><p>Nội dung chi tiết sẽ được Ban biên tập cập nhật.</p>");
+                Set(node, Props.BodyText, $"<p>{summary}</p>");
                 Set(node, "publishDate", DateTime.Now);
             }
             node.SetValue(MapProps.Lat, lat.ToString(inv));
@@ -323,16 +331,130 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
         }
     }
 
+    /// <summary>Ghi chú giữ chỗ không được hiển thị cho bạn đọc (yêu cầu rà soát giao diện 22/10/2026).</summary>
+    private static readonly (System.Text.RegularExpressions.Regex Pattern, string Replace)[] PlaceholderRules =
+    {
+        (new(@"<p>\s*(<em>)?\s*Nội dung (chi tiết sẽ được Ban biên tập|trang này là dữ liệu demo)[^<]*(</em>)?\s*</p>", System.Text.RegularExpressions.RegexOptions.IgnoreCase), ""),
+        (new(@"\s*\((bản demo|video demo|âm thanh demo|ảnh demo)(,[^)]*)?\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase), ""),
+        (new(@"Ảnh minh họa cho bài viết\.?"), "Ảnh minh họa."),
+        (new(@"\bbànn+\b"), "bàn"),
+    };
+
+    private static readonly string[] CleanProps =
+        { Props.Summary, Props.BodyText, Props.Source, Props.Description, LibraryProps.Author };
+
+    private const string OldIntroMarker = "Cổng thông tin là kênh";
+    private const string OldContactMarker = "qua email ở chân trang";
+    private const string PlaceholderAddress = "đường Mẫu";
+    private const string PlaceholderEmail = "example.vn";
+    private const string PlaceholderOrg = "(demo)";
+
+    private static string Clean(string s) => PlaceholderRules.Aggregate(s, (acc, r) => r.Pattern.Replace(acc, r.Replace));
+
+    private void EnsureCleanContent(IContent home)
+    {
+        var all = _content.GetPagedDescendants(home.Id, 0, 20000, out _).Where(c => !c.Trashed).Prepend(home).ToList();
+        var count = 0;
+        foreach (var c in all)
+        {
+            var changed = false;
+            var cultures = c.ContentType.VariesByCulture() ? c.AvailableCultures.ToArray() : new string?[] { null };
+            foreach (var culture in cultures)
+            {
+                var name = culture == null ? c.Name : c.GetCultureName(culture);
+                if (name != null && Clean(name) is var n && n != name)
+                {
+                    if (culture == null) c.Name = n; else c.SetCultureName(n, culture);
+                    changed = true;
+                }
+                foreach (var alias in CleanProps)
+                {
+                    if (!c.Properties.TryGetValue(alias, out var p) || p == null) continue;
+                    var cul = p.PropertyType.VariesByCulture() ? culture : null;
+                    if (c.GetValue<string>(alias, cul) is not { } v || Clean(v) is var nv && nv == v) continue;
+                    c.SetValue(alias, nv.Trim(), cul);
+                    changed = true;
+                }
+
+                if (c.ContentType.Alias == DocTypes.TextPage && c.GetValue<string>(Props.BodyText, culture) is { } body)
+                {
+                    if (body.Contains(OldIntroMarker)) { c.SetValue(Props.BodyText, SiteMapContent.IntroBody(), culture); changed = true; }
+                    else if (body.Contains(OldContactMarker)) { c.SetValue(Props.BodyText, SiteMapContent.ContactBody, culture); changed = true; }
+                }
+
+                if (c.Id == home.Id)
+                {
+                    if (c.GetValue<string>(Props.FooterOrg, culture)?.Contains(PlaceholderOrg) == true)
+                    {
+                        c.SetValue(Props.FooterOrg, SiteMap.OrgName, culture);
+                        c.SetValue(Props.FooterCopyright, SiteMap.Copyright, culture);
+                        changed = true;
+                    }
+                    if (c.GetValue<string>(Props.FooterAddress, culture)?.Contains(PlaceholderAddress) == true)
+                    { c.SetValue(Props.FooterAddress, string.Empty, culture); changed = true; }
+                    if (c.GetValue<string>("footerEmail")?.Contains(PlaceholderEmail) == true)
+                    { c.SetValue("footerEmail", string.Empty); changed = true; }
+                }
+            }
+            if (!changed) continue;
+            var result = c.ContentType.VariesByCulture() ? _content.SaveAndPublish(c, cultures.OfType<string>().ToArray()) : _content.SaveAndPublish(c);
+            if (!result.Success) _logger.LogWarning("Không publish được {Name}: {Result}", c.Name, result.Result);
+            count++;
+        }
+        if (count > 0) _logger.LogInformation("Đã làm sạch ghi chú giữ chỗ ở {Count} nội dung", count);
+    }
+
+    private const int ShortBodyLength = 200;
+    private const string ContextMarker = "doc-context";
+
+    /// <summary>
+    /// Bài chỉ có một câu tóm tắt được bổ sung đoạn ngữ cảnh trung tính lấy từ mô tả chuyên mục/giai đoạn có sẵn,
+    /// kèm gợi ý tra cứu tiếp; không thêm dữ kiện lịch sử.
+    /// </summary>
+    private void EnsureContextParagraphs(IContent home)
+    {
+        var all = _content.GetPagedDescendants(home.Id, 0, 20000, out _).Where(c => !c.Trashed).ToList();
+        var byId = all.ToDictionary(c => c.Id);
+        var strip = new System.Text.RegularExpressions.Regex("<[^>]+>");
+        var count = 0;
+        foreach (var c in all.Where(c => SiteHelpers.ItemTypes.Contains(c.ContentType.Alias)))
+        {
+            var culture = c.ContentType.VariesByCulture() ? Cultures.Vi : null;
+            var bodyProp = c.Properties.TryGetValue(Props.BodyText, out var bp) ? bp : null;
+            if (bodyProp == null) continue;
+            var bodyCulture = bodyProp.PropertyType.VariesByCulture() ? culture : null;
+            var body = c.GetValue<string>(Props.BodyText, bodyCulture) ?? string.Empty;
+            if (body.Contains(ContextMarker) || strip.Replace(body, " ").Trim().Length >= ShortBodyLength) continue;
+
+            var ancestors = c.Path.Split(',').Select(int.Parse).Where(byId.ContainsKey).Select(id => byId[id]).ToList();
+            var period = ancestors.FirstOrDefault(a => a.ContentType.Alias == DocTypes.Period);
+            var topSection = ancestors.FirstOrDefault(a => a.ParentId == home.Id);
+            var section = topSection == null ? null : SiteMap.Sections.FirstOrDefault(s => s.UrlName == UrlName(topSection));
+            var context = period?.GetValue<string>(Props.Description) ?? section?.Description;
+            var where = period?.Name ?? section?.Name ?? topSection?.Name;
+            if (string.IsNullOrEmpty(where)) continue;
+
+            var html = $"<div class=\"{ContextMarker}\"><h3>Thuộc: {System.Net.WebUtility.HtmlEncode(where)}</h3>" +
+                       (string.IsNullOrEmpty(context) ? "" : $"<p>{System.Net.WebUtility.HtmlEncode(context)}</p>") +
+                       $"<p>Bạn đọc có thể tìm thêm tư liệu cùng chủ đề tại <a href=\"/{SiteMap.Search}/\">Tra cứu</a> " +
+                       $"hoặc duyệt theo <a href=\"/{SiteMap.Periods}/\">Cây thư mục giai đoạn lịch sử</a>.</p></div>";
+            c.SetValue(Props.BodyText, body + html, bodyCulture);
+            Publish(c);
+            count++;
+        }
+        if (count > 0) _logger.LogInformation("Đã bổ sung đoạn ngữ cảnh cho {Count} bài ngắn", count);
+    }
+
     private const string EDocsName = "Tài liệu điện tử (PDF)";
     private const string PdfFolder = "Tài liệu PDF (demo)";
 
     /// <summary>Tài liệu điện tử demo trong Thư viện tư liệu số; dùng chung tệp PDF demo, Ban biên tập thay bằng tài liệu thật.</summary>
     private static readonly (string Title, string Summary, string Author, int Year)[] EDocs =
     {
-        ("Tuyển tập tư liệu: Cuộc đời và sự nghiệp (bản demo)", "Tập tư liệu điện tử tóm lược các mốc lịch sử từ năm 1890 đến năm 1969.", "Ban Biên tập", 2026),
-        ("Sổ tay học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh (bản demo)", "Tài liệu hướng dẫn sinh hoạt chuyên đề dành cho cán bộ, đoàn viên.", "Ban Biên tập", 2025),
-        ("Di tích lưu niệm Chủ tịch Hồ Chí Minh trên cả nước (bản demo)", "Giới thiệu các khu di tích, nhà lưu niệm gắn với cuộc đời Chủ tịch Hồ Chí Minh.", "Thư viện KHTH TP.HCM", 2024),
-        ("Chủ tịch Hồ Chí Minh với Sài Gòn – TP. Hồ Chí Minh (bản demo)", "Tập tư liệu về tình cảm của Bác với Thành phố mang tên Người.", "Thư viện KHTH TP.HCM", 2024),
+        ("Tuyển tập tư liệu: Cuộc đời và sự nghiệp", "Tập tư liệu điện tử tóm lược các mốc lịch sử từ năm 1890 đến năm 1969.", "Ban Biên tập", 2026),
+        ("Sổ tay học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh", "Tài liệu hướng dẫn sinh hoạt chuyên đề dành cho cán bộ, đoàn viên.", "Ban Biên tập", 2025),
+        ("Di tích lưu niệm Chủ tịch Hồ Chí Minh trên cả nước", "Giới thiệu các khu di tích, nhà lưu niệm gắn với cuộc đời Chủ tịch Hồ Chí Minh.", "Thư viện KHTH TP.HCM", 2024),
+        ("Chủ tịch Hồ Chí Minh với Sài Gòn – TP. Hồ Chí Minh", "Tập tư liệu về tình cảm của Bác với Thành phố mang tên Người.", "Thư viện KHTH TP.HCM", 2024),
     };
 
     private void EnsureEDocuments(IContent home)
@@ -410,27 +532,130 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
 
     private const string ImageFolder = "Ảnh minh họa (demo)";
 
-    /// <summary>Tư liệu chưa có ảnh đại diện được gắn ảnh di tích thật (Wikimedia Commons) trong thư mục Media demo.</summary>
-    private void EnsureThumbnails(IContent home)
+    private const string PhotosProp = "photos";
+    private const string MuseumItemType = "museumItem";
+    private const string CommonsList = "commons-images.json";
+    private const int AlbumMaxPhotos = 8;
+    private static readonly Regex FigureTag = new("<figure>.*?</figure>", RegexOptions.Singleline);
+    private static readonly Regex FigureAlt = new("alt=\"([^\"]*)\"");
+    private static readonly Regex CreditLine = new("<p class=\"img-credit\">.*?</p>", RegexOptions.Singleline);
+    private static readonly Regex MediaKeyPattern = new("\"mediaKey\"\\s*:\\s*\"([0-9a-fA-F-]{36})\"");
+
+    /// <summary>
+    /// Ảnh đại diện, ảnh trong bài và ảnh album chỉ giữ khi cùng chủ đề với tư liệu (xem <see cref="ImageRelevance"/>);
+    /// ảnh gán ngẫu nhiên lúc tạo dữ liệu mẫu bị gỡ, khối ảnh khi đó hiển thị nền trung tính.
+    /// </summary>
+    private void EnsureRelevantImages(IContent home)
     {
         var folder = _media.GetRootMedia().FirstOrDefault(m => m.Name == ImageFolder);
         if (folder == null) return;
-        var images = _media.GetPagedChildren(folder.Id, 0, 500, out _).ToList();
-        if (images.Count == 0) return;
+        var images = _media.GetPagedChildren(folder.Id, 0, 500, out _)
+            .Select(m => (Media: m, Topics: ImageRelevance.ImageTopics(m.Name)))
+            .Where(x => x.Topics.Count > 0).OrderBy(x => x.Media.Name).ToList();
+        var credits = LoadCredits();
 
-        var missing = _content.GetPagedDescendants(home.Id, 0, 10000, out _)
-            .Where(c => !c.Trashed && SiteHelpers.ItemTypes.Contains(c.ContentType.Alias)
-                        && c.HasProperty(LibraryProps.Thumbnail) && string.IsNullOrEmpty(c.GetValue<string>(LibraryProps.Thumbnail)))
+        var targets = _content.GetPagedDescendants(home.Id, 0, 20000, out _)
+            .Where(c => !c.Trashed && (SiteHelpers.ItemTypes.Contains(c.ContentType.Alias)
+                        || c.ContentType.Alias is DocTypes.Period or MuseumItemType))
             .ToList();
-        var n = 0;
-        foreach (var c in missing)
+        var count = 0;
+        foreach (var c in targets)
         {
-            var img = images[(c.Id + n++) % images.Count];
-            c.SetValue(LibraryProps.Thumbnail, System.Text.Json.JsonSerializer.Serialize(new[] { new { key = Guid.NewGuid(), mediaKey = img.Key } }));
-            Publish(c);
+            var variant = c.ContentType.VariesByCulture();
+            var topics = ImageRelevance.ContentTopics(variant ? c.GetCultureName(Cultures.Vi) ?? c.Name : c.Name);
+            var fits = images.Where(i => i.Topics.Overlaps(topics)).Select(i => i.Media).ToList();
+            var cultures = variant ? c.AvailableCultures.ToArray() : new string?[] { null };
+            string?[] CulturesOf(IProperty p) => p.PropertyType.VariesByCulture() ? cultures : new string?[] { null };
+            var changed = false;
+
+            IMedia? thumb = null;
+            if (c.Properties.TryGetValue(LibraryProps.Thumbnail, out var tp) && tp != null)
+            {
+                var current = MediaKeys(c.GetValue<string>(LibraryProps.Thumbnail, tp.PropertyType.VariesByCulture() ? Cultures.Vi : null)).FirstOrDefault();
+                thumb = fits.FirstOrDefault(m => m.Key == current) ?? (fits.Count > 0 ? fits[c.Id % fits.Count] : null);
+                foreach (var culture in CulturesOf(tp))
+                {
+                    if (MediaKeys(c.GetValue<string>(LibraryProps.Thumbnail, culture)).FirstOrDefault() == (thumb?.Key ?? Guid.Empty)) continue;
+                    c.SetValue(LibraryProps.Thumbnail, thumb == null ? null : PickMedia(thumb), culture);
+                    changed = true;
+                }
+            }
+
+            if (c.Properties.TryGetValue(PhotosProp, out var pp) && pp != null)
+            {
+                var album = fits.Take(AlbumMaxPhotos).ToArray();
+                foreach (var culture in CulturesOf(pp))
+                {
+                    if (MediaKeys(c.GetValue<string>(PhotosProp, culture)).SequenceEqual(album.Select(m => m.Key))) continue;
+                    c.SetValue(PhotosProp, album.Length == 0 ? null : PickMedia(album), culture);
+                    changed = true;
+                }
+            }
+
+            if (c.Properties.TryGetValue(Props.BodyText, out var bp) && bp != null)
+            {
+                foreach (var culture in CulturesOf(bp))
+                {
+                    if (c.GetValue<string>(Props.BodyText, culture) is not { } body) continue;
+                    var fixedBody = RelevantBodyImages(body, thumb, fits, credits, c.Id);
+                    if (fixedBody == body) continue;
+                    c.SetValue(Props.BodyText, fixedBody, culture);
+                    changed = true;
+                }
+            }
+
+            if (!changed) continue;
+            var result = variant ? _content.SaveAndPublish(c, cultures.OfType<string>().ToArray()) : _content.SaveAndPublish(c);
+            if (!result.Success) _logger.LogWarning("Không publish được {Name}: {Result}", c.Name, result.Result);
+            count++;
         }
-        if (missing.Count > 0) _logger.LogInformation("Đã gắn ảnh cho {Count} tư liệu chưa có ảnh", missing.Count);
+        if (count > 0) _logger.LogInformation("Đã rà soát ảnh cho {Count} nội dung, chỉ giữ ảnh đúng chủ đề", count);
     }
+
+    private string RelevantBodyImages(string body, IMedia? thumb, List<IMedia> fits, Dictionary<string, string> credits, int seed)
+    {
+        Func<string?, string?> enc = System.Net.WebUtility.HtmlEncode;
+        var spare = fits.Where(m => m.Key != thumb?.Key).ToList();
+        var used = 0;
+        body = FigureTag.Replace(body, f =>
+        {
+            var alt = System.Net.WebUtility.HtmlDecode(FigureAlt.Match(f.Value).Groups[1].Value);
+            if (fits.Any(m => m.Name == alt)) return f.Value;
+            if (spare.Count == 0) return string.Empty;
+            var m = spare[(seed + used++) % spare.Count];
+            return $"<figure><img src=\"{m.GetUrl(Constants.Conventions.Media.File, _urlGenerators)}\" alt=\"{enc(m.Name)}\" />" +
+                   $"<figcaption>{enc(credits.GetValueOrDefault(m.Name!, string.Empty))}</figcaption></figure>";
+        });
+        body = CreditLine.Replace(body, string.Empty);
+        if (thumb == null || !credits.TryGetValue(thumb.Name!, out var credit)) return body;
+
+        var line = $"<p class=\"img-credit\">Ảnh đại diện – {enc(credit)}</p>";
+        var at = body.IndexOf($"<div class=\"{ContextMarker}\"", StringComparison.Ordinal);
+        return at < 0 ? body + line : body.Insert(at, line);
+    }
+
+    /// <summary>Ghi công tác giả và giấy phép ảnh Wikimedia Commons (bắt buộc với CC BY/BY-SA), khóa theo tên Media.</summary>
+    private Dictionary<string, string> LoadCredits()
+    {
+        var file = Path.Combine(_env.ContentRootPath, "Setup", CommonsList);
+        var result = new Dictionary<string, string>();
+        if (!System.IO.File.Exists(file)) return result;
+        using var doc = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(file));
+        foreach (var e in doc.RootElement.EnumerateArray())
+        {
+            var name = Path.GetFileNameWithoutExtension(e.GetProperty("title").GetString()!.Replace("File:", ""));
+            var author = e.TryGetProperty("author", out var a) ? a.GetString() : null;
+            var license = e.TryGetProperty("license", out var l) ? l.GetString() : null;
+            result[name] = $"Ảnh: {(string.IsNullOrWhiteSpace(author) ? "Không rõ tác giả" : author)} / Wikimedia Commons ({license})";
+        }
+        return result;
+    }
+
+    private static List<Guid> MediaKeys(string? value)
+        => string.IsNullOrEmpty(value) ? new() : MediaKeyPattern.Matches(value).Select(m => Guid.Parse(m.Groups[1].Value)).ToList();
+
+    private static string PickMedia(params IMedia[] media)
+        => System.Text.Json.JsonSerializer.Serialize(media.Select(m => new { key = Guid.NewGuid(), mediaKey = m.Key }));
 
     private static string? UrlName(IContent c)
     {
