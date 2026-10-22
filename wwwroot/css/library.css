@@ -80,11 +80,28 @@ a.stat:hover { border-color: var(--red); }
 .lib-tree details[open] > summary::before { transform: rotate(90deg); }
 .lib-tree summary a { flex: 1; display: block; }
 .lib-tree .cnt { font-size: 12px; color: var(--muted); }
-.lib-filter label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500; margin-bottom: 10px; }
-.lib-filter input, .lib-filter select { padding: 8px; border: 1px solid #ccc; font: inherit; font-weight: 400; min-width: 0; }
-.lib-filter .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.lib-filter .actions { display: flex; align-items: center; gap: 12px; }
-.lib-filter button { border: 0; background: var(--red); color: #fff; padding: 9px 16px; font-weight: 700; cursor: pointer; }
+.lib-filter label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500; margin-bottom: 10px; min-width: 0; }
+.lib-filter input, .lib-filter select {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    font: inherit;
+    font-weight: 400;
+    min-width: 0;
+    border-radius: 4px;
+}
+.lib-filter .row2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.lib-filter .row2 > * {
+    min-width: 0;
+}
+.lib-filter .actions { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.lib-filter button { border: 0; background: var(--red); color: #fff; padding: 9px 18px; font-weight: 700; cursor: pointer; border-radius: 4px; }
 .type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .type-chips a { padding: 6px 12px; border: 1px solid #ddd; border-radius: 18px; font-size: 13px; }
 .type-chips a span { background: #eee; border-radius: 9px; padding: 0 7px; margin-left: 4px; font-size: 12px; }

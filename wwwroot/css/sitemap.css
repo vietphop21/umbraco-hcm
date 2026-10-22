@@ -177,11 +177,8 @@ html[data-contrast="high"] .a11y-page :focus-visible { outline: 3px solid #ffd20
 
 /* ================= NHỊP BỐ CỤC TRANG CON =================
    Hai cột căn đầu; cột phải gọn và dính khi cuộn để không kéo dài trang khi bài chính ngắn. */
-.page-wrap .two-col, .lib-grid { align-items: start; }
+.lib-grid { align-items: start; }
 .page-wrap .two-col { margin-bottom: 20px; }
-@media (min-width: 992px) {
-    .side-col { position: sticky; top: 16px; }
-}
 .side-col { display: flex; flex-direction: column; gap: 18px; }
 .side-shortcuts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .side-shortcuts a { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 8px; background: var(--pink); color: var(--red-dark); font-size: 13px; font-weight: 600; line-height: 1.25; }
@@ -251,3 +248,306 @@ html[data-theme="dark"] .news-big.no-thumb { background: var(--surface-2); }
 .page-explore-grid > a:hover { border-color: var(--red); transform: translateY(-1px); }
 .other-sections .chips a .chip-code { display: inline-flex; color: var(--red); font-size: 11px; font-weight: 700; }
 @media (max-width: 600px) { .page-explore-grid { grid-template-columns: 1fr; gap: 8px; } }
+
+
+/* ================= CÂN BẰNG CHIỀU CAO KHỐI TIN TỨC: KHÔNG CẮT ẢNH, CÂN XỨNG 2 BÊN ================= */
+@media (min-width: 900px) {
+    .news-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 26px;
+        align-items: stretch;
+    }
+    .news-big {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .news-big:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0,0,0,.08);
+    }
+    .news-big .thumb {
+        position: relative;
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+        background: #f4efe7;
+        border-radius: 0;
+    }
+    .news-big .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 15%;
+        transition: transform .35s;
+    }
+    .news-big:hover .thumb img {
+        transform: scale(1.03);
+    }
+    .news-big-body {
+        padding: 16px 18px 16px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+    .news-big-body h3 {
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 0 0 8px;
+    }
+    .news-big-body h3 a {
+        color: var(--text);
+        transition: color .2s;
+    }
+    .news-big-body h3 a:hover {
+        color: var(--red);
+    }
+    .news-big-body .sapo {
+        font-size: 13.5px;
+        color: #555;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0 0 10px;
+    }
+    .news-big-body time {
+        margin-top: auto;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 500;
+    }
+
+    /* Cột phải: 4 bài viết dạng hàng ngang có thumbnail nhỏ 95x65px */
+    .news-list {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        gap: 8px;
+    }
+    .news-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 0;
+    }
+    .news-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+    .news-item-thumb {
+        flex: 0 0 95px;
+        height: 65px;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f4efe7;
+        align-self: center;
+    }
+    .news-item-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .3s;
+    }
+    .news-item:hover .news-item-thumb img {
+        transform: scale(1.05);
+    }
+    .news-item-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+        gap: 3px;
+    }
+    .news-item-body h3 {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .news-item-body h3 a {
+        color: var(--text);
+        transition: color .2s;
+    }
+    .news-item-body h3 a:hover {
+        color: var(--red);
+    }
+    .news-item-body .sapo {
+        font-size: 12px;
+        color: #666;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0;
+    }
+    .news-item-body time {
+        font-size: 11.5px;
+        color: var(--muted);
+    }
+}
+
+@media (max-width: 899px) {
+    .news-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    .news-big {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .news-big .thumb {
+        aspect-ratio: 16/10;
+        overflow: hidden;
+    }
+    .news-big .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .news-big-body {
+        padding: 14px 16px;
+    }
+    .news-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+    }
+    .news-item-thumb {
+        flex: 0 0 85px;
+        height: 60px;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .news-item-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+
+/* ================= LƯỚI ĐỊA ĐIỂM BẢN ĐỒ SỐ: 4 CỘT HIỂN THỊ HẾT KHÔNG PHÂN TRANG ================= */
+.places-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+    margin-bottom: 20px;
+}
+@media (max-width: 991px) and (min-width: 641px) {
+    .places-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    .places-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.place-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+    transition: transform .2s, box-shadow .2s;
+}
+.place-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,.08);
+}
+.place-card .thumb {
+    position: relative;
+    width: 100%;
+    height: 125px;
+    aspect-ratio: auto;
+    overflow: hidden;
+    background: #f4efe7;
+}
+.place-card .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .3s;
+}
+.place-card:hover .thumb img {
+    transform: scale(1.04);
+}
+.place-card-body {
+    padding: 10px 11px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+.place-card-body h3 {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0;
+}
+.place-card-body h3 a {
+    color: var(--text);
+    transition: color .2s;
+}
+.place-card-body h3 a:hover {
+    color: var(--red);
+}
+.place-card-body .sapo {
+    font-size: 11.5px;
+    color: #666;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+}
+.place-card-body .more {
+    margin-top: auto;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--red);
+    align-self: flex-end;
+}
+[data-theme="dark"] .place-card {
+    background: var(--surface);
+    border-color: var(--line);
+}
+[data-theme="dark"] .place-card-body .sapo {
+    color: #aaa;
+}
+
+/* Tối ưu chiều cao tối thiểu trang con, loại bỏ hẫng footer */
+.page-wrap {
+    min-height: calc(100vh - 360px);
+    padding-bottom: 20px;
+}
+.container.other-sections {
+    margin: 12px auto 20px;
+    padding-top: 14px;
+}

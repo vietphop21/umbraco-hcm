@@ -4,6 +4,7 @@
 
 /* ================= CHẾ ĐỘ TỐI: THƯ VIỆN SỐ ================= */
 [data-theme="dark"] .lib-tree, [data-theme="dark"] .lib-filter { background: var(--surface); border-color: var(--line); border-top-color: var(--red); }
+[data-theme="dark"] .lib-filter input, [data-theme="dark"] .lib-filter select { background: var(--surface-2); color: var(--text); border-color: var(--line); }
 [data-theme="dark"] .lib-tree ul ul { border-left-color: var(--line); }
 [data-theme="dark"] .lib-tree a { color: var(--text); }
 [data-theme="dark"] .lib-tree a:hover { background: var(--surface-2); }

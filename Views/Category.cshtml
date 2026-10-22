@@ -1,4 +1,4 @@
-﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "Master.cshtml";
     const int pageSize = 12;
@@ -55,7 +55,26 @@
                 </section>
             }
 
-            @if (isMuseum)
+            @if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Map)
+            {
+                <div class="places-grid">
+                    @foreach (var x in all)
+                    {
+                        var img = x.ContentImage(480, 280, usedImages) ?? x.ImgFull(480);
+                        <article class="place-card">
+                            <a class="thumb" href="@x.Url()">
+                                @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-map-location-dot"></i></span> }
+                            </a>
+                            <div class="place-card-body">
+                                <h3><a href="@x.Url()">@x.Name</a></h3>
+                                <p class="sapo">@x.Value("summary")</p>
+                                <a class="more" href="@x.Url()">@SiteHelpers.T("Xem chi tiết »")</a>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+            else if (isMuseum)
             {
                 <div class="grid g3">
                     @foreach (var x in Model.Children())
