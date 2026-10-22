@@ -13,7 +13,7 @@
 <div class="container page-wrap">
     <div class="two-col">
         <article class="detail">
-            @if (parent != null) { <h2 class="sec-title line"><a href="@parent.Url()">@parent.Name</a></h2> }
+            @if (parent != null) { <h2 class="sec-title line"><a href="@parent.Url()">@parent.Name @SiteHelpers.CountBadge(parent.ItemCount())</a></h2> }
             <div class="detail-tools">
                 <time>@SiteHelpers.DayName(d), @d.ToString("dd/MM/yyyy") | @d.ToString("HH:mm")</time>
                 <div class="tools">
@@ -65,6 +65,32 @@
                         </a>
                     }
                 </div>
+            }
+
+            @if (type == DocTypes.PdfDocument)
+            {
+                var pdfUrl = Model.Value<IPublishedContent>(LibraryProps.PdfFile)?.Url();
+                if (Model.HasValue(LibraryProps.Author)) { <p class="pdf-author"><i class="fa fa-user-pen"></i> @Model.Value(LibraryProps.Author)</p> }
+                @if (pdfUrl != null)
+                {
+                    <div class="flipbook" data-pdf="@pdfUrl" data-loading="@SiteHelpers.T("Đang tải tài liệu...")" data-error="@SiteHelpers.T("Không mở được tài liệu.")">
+                        <div class="flipbook-stage"><p class="flipbook-status"><i class="fa fa-spinner fa-spin"></i> @SiteHelpers.T("Đang tải tài liệu...")</p></div>
+                        <div class="flipbook-nav">
+                            <button type="button" data-flip="prev" aria-label="@SiteHelpers.T("Trang trước")"><i class="fa fa-chevron-left"></i></button>
+                            <span class="flipbook-page"></span>
+                            <button type="button" data-flip="next" aria-label="@SiteHelpers.T("Trang sau")"><i class="fa fa-chevron-right"></i></button>
+                        </div>
+                        <p class="flipbook-note"><i class="fa fa-lock"></i> @SiteHelpers.T("Tài liệu chỉ được xem trực tuyến, không cho phép tải về.")</p>
+                    </div>
+                }
+                else { <p class="empty">@SiteHelpers.T("Tài liệu đang được cập nhật.")</p> }
+            }
+            @{ var linkedPeriods = Model.LinkedPeriods().ToList(); }
+            @if (linkedPeriods.Any())
+            {
+                <p class="lib-meta detail-periods"><b>@SiteHelpers.T("Thuộc giai đoạn"):</b>
+                    @foreach (var p in linkedPeriods) { <a class="period-chip" href="@p.Url()">@p.Name</a> }
+                </p>
             }
 
             <div class="detail-body" id="detail-body">@Model.Value("bodyText")</div>
