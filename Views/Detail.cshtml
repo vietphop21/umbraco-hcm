@@ -14,6 +14,8 @@
     if (related.Count < cardCount)
         related.AddRange(Model.Root().Items(RelatedMax * 3).Where(x => x.Id != Model.Id && related.All(r => r.Id != x.Id)).Take(cardCount - related.Count));
     var relatedTitle = related.Count > sameSectionCount ? "Tư liệu liên quan" : "Tin cùng chuyên mục";
+    var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
 
     // Đoạn mở đầu trùng sapo thì không lặp lại trong thân bài.
     var summaryText = Model.Value<string>(Props.Summary)?.Trim();
@@ -124,7 +126,7 @@
                         {
                             <article class="item-v">
                                 <a class="thumb" href="@x.Url()">
-                                    @if (x.Img(400, 250) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
+                                    @if (x.ContentImage(400, 250, usedImages) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
                                 </a>
                                 <h3><a href="@x.Url()">@x.Name</a></h3>
                             </article>

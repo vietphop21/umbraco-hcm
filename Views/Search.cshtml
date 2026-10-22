@@ -16,6 +16,7 @@
     var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)LibrarySettings.PageSize));
     page = Math.Min(page, totalPages);
     var items = all.Skip((page - 1) * LibrarySettings.PageSize).Take(LibrarySettings.PageSize).ToList();
+    var usedImages = new HashSet<string>();
     var pagerQuery = string.Join("&", query.Where(kv => kv.Key != LibraryQueryKeys.Page && !string.IsNullOrEmpty(kv.Value))
         .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value.ToString())}"));
     if (pagerQuery.Length > 0) pagerQuery += "&";
@@ -69,7 +70,7 @@
                 var type = x.ContentType.Alias;
                 <article class="lib-item">
                     <a class="thumb" href="@x.Url()">
-                        @if (x.ImgFull(480) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(type)"></i></span> }
+                        @if ((x.ContentImage(480, 320, usedImages) ?? x.ImgFull(480)) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(type)"></i></span> }
                         <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(type)"></i> @LibraryQuery.TypeLabel(type)</span>
                     </a>
                     <div class="lib-text">

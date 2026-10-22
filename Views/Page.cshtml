@@ -10,6 +10,30 @@
             <h1 class="sec-title line">@Model.Name</h1>
             <div class="detail-body">@Model.Value("bodyText")</div>
 
+            @{
+                var explore = Model.Root().Sections().Where(s => s.Node.Id != Model.Id)
+                    .OrderBy(s => s.Info.UrlName == SiteMap.Life ? 0 : s.Info.UrlName == SiteMap.Thought ? 1 : s.Info.UrlName == SiteMap.Media ? 2 : 3)
+                    .Take(4).ToList();
+                var usedImages = new HashSet<string>();
+                ViewData["UsedContentImages"] = usedImages;
+            }
+            @if (explore.Any())
+            {
+                <section class="page-explore" aria-labelledby="page-explore-title">
+                    <h2 id="page-explore-title" class="sec-title line">@SiteHelpers.T("Khám phá nội dung")</h2>
+                    <div class="page-explore-grid">
+                        @foreach (var (info, node) in explore)
+                        {
+                            var image = node.ContentImage(480, 280, usedImages);
+                            <a href="@node.Url()">
+                                @if (image != null) { <img src="@image" alt="" loading="lazy" /> }
+                                <span class="page-explore-copy"><small class="page-explore-code">@info.Code</small><strong>@SiteHelpers.T(info.MenuName)</strong><small>@SiteHelpers.T(info.Description)</small></span>
+                            </a>
+                        }
+                    </div>
+                </section>
+            }
+
             @if (Model.Value<bool>("showContactForm"))
             {
                 if (TempData["contactOk"] != null)

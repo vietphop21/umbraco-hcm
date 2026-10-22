@@ -13,6 +13,8 @@
     page = Math.Clamp(page, 1, totalPages);
     var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
     var subs = Model.MenuChildren().ToList();
+    var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
 }
 <div class="container page-wrap">
     <div class="two-col">
@@ -58,7 +60,7 @@
                 <div class="grid g3">
                     @foreach (var x in Model.Children())
                     {
-                        var img = x.Img(480, 300);
+                        var img = x.ContentImage(480, 300);
                         <a class="museum-item" href="@(x.Value<string>("link") ?? "#")" target="_blank" rel="noopener">
                             <span class="thumb">
                                 @if (img != null) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-landmark"></i></span> }
@@ -73,7 +75,7 @@
             {
                 @foreach (var x in items)
                 {
-                    var img = x.ImgFull(480);
+                    var img = x.ContentImage(480, 320, usedImages) ?? x.ImgFull(480);
                     var icon = x.ContentType.Alias switch { "videoItem" => "fa-play", "photoAlbum" => "fa-camera", "audioItem" => "fa-volume-high", _ => null };
                     <article class="list-item">
                         <h3><a href="@x.Url()">@x.Name</a></h3>
@@ -112,7 +114,7 @@
                                 {
                                     <article class="item-v">
                                         <a class="thumb" href="@x.Url()">
-                                            @if (x.Img(400, 260) is string rimg) { <img src="@rimg" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i></span> }
+                                            @if (x.ContentImage(400, 260, usedImages) is string rimg) { <img src="@rimg" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i></span> }
                                             <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i> @LibraryQuery.TypeLabel(x.ContentType.Alias)</span>
                                         </a>
                                         <h3><a href="@x.Url()">@x.Name</a></h3>
