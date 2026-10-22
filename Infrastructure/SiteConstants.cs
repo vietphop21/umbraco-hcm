@@ -99,6 +99,21 @@ public static class SiteMap
     public static readonly int[] Milestones = { 1890, 1911, 1920, 1930, 1945, 1954, 1960, 1969 };
 }
 
+public static class SiteMapCovers
+{
+    public const string Introduction = "/media/eiqnfkok/hanoi-vietnam-interiors-of-ho-chi-minh-museum.jpg";
+    public const string Life = "/media/j3jnagiz/ho-chi-minh-1946.jpg";
+    public const string Thought = "/media/0yjf02uo/ho-chi-minh-museum-hanoi-2.jpg";
+    public const string Saigon = "/media/zmbjlwqb/h%E1%BB%8Dc-vi%C3%AAn-an-ninh-tham-quan-b%E1%BA%BFn-nh%C3%A0-r%E1%BB%93ng.jpg";
+    public const string Works = "/media/ahahdmp1/hanoi-vietnam-ho-chi-minh-museum-02.jpg";
+    public const string Children = "/media/3dhkhyrz/%C4%91%C3%B4i-d%C3%A9p-b%C3%A1c-h%E1%BB%93-t%E1%BA%A1i-b%E1%BA%A3o-t%C3%A0ng-b%E1%BA%BFn-nh%C3%A0-r%E1%BB%93ng-n%C4%83m-2018-2.jpg";
+    public const string Follow = "/media/i55mnvfw/honour-guards-at-ho-chi-minh-mausoleum-hanoi-20240123-1133-3240.jpg";
+    public const string Sectors = "/media/d3njnpcd/hanoi-vietnam-visitors-at-ho-chi-minh-museum.jpg";
+    public const string Documents = "/media/ffoml1n5/ba-dinh-square-september-2nd-1945.jpg";
+    public const string Media = "/media/dc4dkpna/oct2025visit-to-the-ho-chi-minh-museum-hanoi-vietnam-03.jpg";
+    public const string Map = "/media/o3earjbj/kim-lien-monuments-park.jpg";
+}
+
 /// <summary>Bản đồ số (2.11): mỗi địa danh là một bài viết có thêm vĩ độ, kinh độ.</summary>
 public static class MapProps
 {

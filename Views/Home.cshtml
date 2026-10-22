@@ -25,7 +25,24 @@
                    ?? own.FirstOrDefault(x => !usedCovers.Contains(x.ImgKey()!))
                    ?? own.FirstOrDefault();
         if (pick?.ImgKey() is { } key) usedCovers.Add(key);
-        return pick?.Img(640, 480);
+        if (pick?.Img(640, 480) is { } image) return image;
+
+        var sectionUrl = section.Value<string>(SiteMap.UrlNameProp, Cultures.Vi);
+        return sectionUrl switch
+        {
+            SiteMap.Intro => SiteMapCovers.Introduction,
+            SiteMap.Life => SiteMapCovers.Life,
+            SiteMap.Thought => SiteMapCovers.Thought,
+            SiteMap.Saigon => SiteMapCovers.Saigon,
+            SiteMap.Works => SiteMapCovers.Works,
+            SiteMap.Kids => SiteMapCovers.Children,
+            SiteMap.Follow => SiteMapCovers.Follow,
+            SiteMap.Sectors => SiteMapCovers.Sectors,
+            SiteMap.Documents => SiteMapCovers.Documents,
+            SiteMap.Media => SiteMapCovers.Media,
+            SiteMap.Map => SiteMapCovers.Map,
+            _ => null,
+        };
     }
 }
 

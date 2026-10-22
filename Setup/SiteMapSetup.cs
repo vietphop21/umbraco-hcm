@@ -554,15 +554,24 @@ public class SiteMapSetupHandler : INotificationHandler<UmbracoApplicationStarte
             .Where(x => x.Topics.Count > 0).OrderBy(x => x.Media.Name).ToList();
         var credits = LoadCredits();
 
-        var targets = _content.GetPagedDescendants(home.Id, 0, 20000, out _)
-            .Where(c => !c.Trashed && (SiteHelpers.ItemTypes.Contains(c.ContentType.Alias)
-                        || c.ContentType.Alias is DocTypes.Period or MuseumItemType))
+        var allContent = _content.GetPagedDescendants(home.Id, 0, 20000, out _)
+            .Where(c => !c.Trashed).ToList();
+        var contentById = allContent.ToDictionary(c => c.Id);
+        var targets = allContent
+            .Where(c => SiteHelpers.ItemTypes.Contains(c.ContentType.Alias)
+                        || c.ContentType.Alias is DocTypes.Period or MuseumItemType)
             .ToList();
         var count = 0;
         foreach (var c in targets)
         {
             var variant = c.ContentType.VariesByCulture();
-            var topics = ImageRelevance.ContentTopics(variant ? c.GetCultureName(Cultures.Vi) ?? c.Name : c.Name);
+            var titlePath = new List<string>();
+            for (IContent? current = c; current != null; current = current.Id == home.Id ? null : contentById.GetValueOrDefault(current.ParentId))
+            {
+                var name = current.ContentType.VariesByCulture() ? current.GetCultureName(Cultures.Vi) ?? current.Name : current.Name;
+                if (!string.IsNullOrWhiteSpace(name)) titlePath.Add(name);
+            }
+            var topics = ImageRelevance.ContentTopics(string.Join(" ", titlePath));
             var fits = images.Where(i => i.Topics.Overlaps(topics)).Select(i => i.Media).ToList();
             var cultures = variant ? c.AvailableCultures.ToArray() : new string?[] { null };
             string?[] CulturesOf(IProperty p) => p.PropertyType.VariesByCulture() ? cultures : new string?[] { null };
