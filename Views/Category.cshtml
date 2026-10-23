@@ -2,8 +2,9 @@
 @{
     Layout = "Master.cshtml";
     const int pageSize = 12;
-    const int RelatedFillThreshold = 6;
-    const int RelatedCount = 6;
+    const int RelatedFillThreshold = pageSize;
+    const int RelatedCandidateCount = 48;
+    const int RelatedPageSize = 18;
     const int RelatedColumns = 3;
     int.TryParse(Context.Request.Query["page"], out var page);
 
@@ -12,6 +13,8 @@
     var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)pageSize));
     page = Math.Clamp(page, 1, totalPages);
     var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    int.TryParse(Context.Request.Query["relatedPage"], out var relatedPage);
+    relatedPage = Math.Max(1, relatedPage);
     var subs = Model.MenuChildren().ToList();
     var usedImages = new HashSet<string>();
     ViewData["UsedContentImages"] = usedImages;
@@ -31,13 +34,31 @@
             @if (Model.HasValue("description")) { <p class="cat-desc">@Model.Value("description")</p> }
             @if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Map)
             {
-                var places = all.Select(x => (x, c: x.Coordinates())).Where(t => t.c != null)
-                    .Select(t => new { name = t.x.Name, url = t.x.Url(), summary = t.x.Value<string>(Props.Summary), img = t.x.Img(320, 200), lat = t.c!.Value.Lat, lng = t.c!.Value.Lng })
-                    .ToList();
-                <div id="place-map" class="place-map" data-places='@System.Text.Json.JsonSerializer.Serialize(places)'
-                     data-lat="@MapProps.DefaultLat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                     data-lng="@MapProps.DefaultLng.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                     data-zoom="@MapProps.DefaultZoom" aria-label="@SiteHelpers.T("Bản đồ số")"></div>
+                var mapPlaces = all.Select(x => (Item: x, Coordinates: x.Coordinates()))
+                    .Where(t => t.Coordinates != null).ToList();
+                if (mapPlaces.Any())
+                {
+                    <section class="map-places" aria-label="@SiteHelpers.T("Bản đồ các địa danh")">
+                        <h2 class="sec-title line">@SiteHelpers.T("Địa danh gắn với cuộc đời và hoạt động cách mạng")</h2>
+                        <p class="map-intro">@SiteHelpers.T("Chọn một địa điểm để xem vị trí cụ thể trên Google Maps.")</p>
+                        <div class="map-place-grid">
+                            @foreach (var place in mapPlaces)
+                            {
+                                var coords = place.Coordinates!.Value;
+                                <article class="map-place-card">
+                                    <div class="map-place-frame">
+                                        <iframe src="@SiteHelpers.MapEmbedUrl(coords.Lat, coords.Lng)" title="@SiteHelpers.T("Bản đồ") — @place.Item.Name" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+                                    </div>
+                                    <div class="map-place-body">
+                                        <h3><a href="@place.Item.Url()">@place.Item.Name</a></h3>
+                                        @if (place.Item.Value<string>(Props.Summary) is string summary) { <p class="sapo">@summary</p> }
+                                        <a class="more" href="@place.Item.Url()">@SiteHelpers.T("Thông tin địa danh") <i class="fa fa-arrow-right"></i></a>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    </section>
+                }
             }
             @if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Life && Model.LibraryRoot() is { } tree)
             {
@@ -94,7 +115,7 @@
             {
                 @foreach (var x in items)
                 {
-                    var img = x.ContentImage(480, 320, usedImages) ?? x.ImgFull(480);
+                    var img = x.ContentImage(480, 320, usedImages, Model) ?? x.ImgFull(480);
                     var icon = x.ContentType.Alias switch { "videoItem" => "fa-play", "photoAlbum" => "fa-camera", "audioItem" => "fa-volume-high", _ => null };
                     <article class="list-item">
                         <h3><a href="@x.Url()">@x.Name</a></h3>
@@ -117,31 +138,63 @@
                 @if (!all.Any()) { <p class="empty">@SiteHelpers.T("Chuyên mục chưa có bài viết.")</p> }
                 <partial name="Site/Pager" model="(page, totalPages, string.Empty)" />
 
-                @* Chuyên mục ít bài: gợi ý tư liệu từ các chuyên mục cùng cấp để người xem có bước tiếp theo. *@
-                @if (page == 1 && all.Count < RelatedFillThreshold)
-                {
-                    var own = all.Select(x => x.Id).ToHashSet();
-                    var source = Model.Parent?.ContentType.Alias == DocTypes.Category ? Model.Parent : Model.Root();
-                    var pool = source.Items().Where(x => !own.Contains(x.Id)).Take(RelatedCount).ToList();
-                    var related = pool.Take(pool.Count >= RelatedColumns ? pool.Count / RelatedColumns * RelatedColumns : pool.Count).ToList();
-                    if (related.Any())
+            }
+            @if (!isMuseum && page == 1 && all.Count < RelatedFillThreshold)
+            {
+                var own = all.Select(x => x.Id).ToHashSet();
+                var categoryTerms = SiteHelpers.Unaccent((Model.Parent?.Name ?? string.Empty) + " " + Model.Name)
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(term => term.Length > 2 && term is not ("cua" or "chu" or "tich" or "ho" or "chi" or "minh" or "voi" or "va" or "ve" or "bac"))
+                    .ToArray();
+                var preferredTypes = all.Select(x => x.ContentType.Alias).ToHashSet();
+                var pool = Model.Root().Items()
+                    .Where(x => !own.Contains(x.Id))
+                    .Select(x =>
                     {
-                        <section class="related-fill">
-                            <h2 class="sec-title line">@SiteHelpers.T("Tư liệu liên quan")</h2>
-                            <div class="grid g3">
-                                @foreach (var x in related)
+                        var title = SiteHelpers.Unaccent(x.Name);
+                        var text = title + " " + SiteHelpers.Unaccent(x.Value<string>(Props.Summary));
+                        var relevance = categoryTerms.Sum(term => (title.Contains(term) ? 3 : 0) + (text.Contains(term) ? 1 : 0));
+                        var sameType = preferredTypes.Contains(x.ContentType.Alias) ? 1 : 0;
+                        return (Item: x, Relevance: relevance, SameType: sameType);
+                    })
+                    .OrderByDescending(x => x.Relevance)
+                    .ThenByDescending(x => x.SameType)
+                    .ThenByDescending(x => x.Item.Date())
+                    .Take(RelatedCandidateCount)
+                    .Select(x => x.Item)
+                    .ToList();
+                var relatedPageCount = Math.Max(1, (int)Math.Ceiling(pool.Count / (double)RelatedPageSize));
+                relatedPage = Math.Min(relatedPage, relatedPageCount);
+                var related = pool.Skip((relatedPage - 1) * RelatedPageSize).Take(RelatedPageSize).ToList();
+                if (related.Any())
+                {
+                    <section class="related-fill" id="related-materials" data-gap-fill="true">
+                        <h2 class="sec-title line">@SiteHelpers.T("Tư liệu liên quan")</h2>
+                        <div class="grid g3">
+                            @{ var relatedIndex = 0; }
+                            @foreach (var x in related)
+                            {
+                                <article class="item-v" @(relatedIndex++ >= RelatedColumns ? "hidden" : null)>
+                                    <a class="thumb" href="@x.Url()">
+                                        @if (x.ContentImage(400, 260, usedImages) is string rimg) { <img src="@rimg" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i></span> }
+                                        <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i> @LibraryQuery.TypeLabel(x.ContentType.Alias)</span>
+                                    </a>
+                                    <h3><a href="@x.Url()">@x.Name</a></h3>
+                                </article>
+                            }
+                        </div>
+                        @if (relatedPageCount > 1)
+                        {
+                            <nav class="pager related-pager" aria-label="@SiteHelpers.T("Phân trang tư liệu liên quan")">
+                                @if (relatedPage > 1) { <a href="@(Model.Url() + "?relatedPage=" + (relatedPage - 1) + "#related-materials")">‹</a> }
+                                @for (var rp = 1; rp <= relatedPageCount; rp++)
                                 {
-                                    <article class="item-v">
-                                        <a class="thumb" href="@x.Url()">
-                                            @if (x.ContentImage(400, 260, usedImages) is string rimg) { <img src="@rimg" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i></span> }
-                                            <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(x.ContentType.Alias)"></i> @LibraryQuery.TypeLabel(x.ContentType.Alias)</span>
-                                        </a>
-                                        <h3><a href="@x.Url()">@x.Name</a></h3>
-                                    </article>
+                                    <a class="@(rp == relatedPage ? "active" : "")" href="@(Model.Url() + "?relatedPage=" + rp + "#related-materials")">@rp</a>
                                 }
-                            </div>
-                        </section>
-                    }
+                                @if (relatedPage < relatedPageCount) { <a href="@(Model.Url() + "?relatedPage=" + (relatedPage + 1) + "#related-materials")">›</a> }
+                            </nav>
+                        }
+                    </section>
                 }
             }
         </div>

@@ -4,16 +4,24 @@
     var type = Model.ContentType.Alias;
     var parent = Model.Parent;
     const int RelatedMin = 4;
-    const int RelatedMax = 8;
+    const int RelatedMax = 48;
+    const int RelatedPageSize = 12;
+    const int ShortBodyCardCount = 12;
     const int ShortBody = 600;
     var plainBody = System.Text.RegularExpressions.Regex.Replace(Model.Value<string>(Props.BodyText) ?? "", "<[^>]+>", " ").Trim();
     // Bài ngắn: hiện thêm thẻ liên quan để cột chính cân với cột phải.
-    var cardCount = plainBody.Length < ShortBody ? RelatedMax : RelatedMin;
-    var related = parent?.Items(RelatedMax + 1).Where(x => x.Id != Model.Id).Take(RelatedMax).ToList() ?? new();
-    var sameSectionCount = related.Count;
-    if (related.Count < cardCount)
-        related.AddRange(Model.Root().Items(RelatedMax * 3).Where(x => x.Id != Model.Id && related.All(r => r.Id != x.Id)).Take(cardCount - related.Count));
-    var relatedTitle = related.Count > sameSectionCount ? "Tư liệu liên quan" : "Tin cùng chuyên mục";
+    var cardCount = plainBody.Length < ShortBody ? ShortBodyCardCount : RelatedMin;
+    var relatedPool = parent?.Items(RelatedMax).Where(x => x.Id != Model.Id).Take(RelatedMax).ToList() ?? new();
+    var sameSectionCount = relatedPool.Count;
+    if (relatedPool.Count < RelatedMax)
+        relatedPool.AddRange(Model.Root().Items(RelatedMax * 3)
+            .Where(x => x.Id != Model.Id && relatedPool.All(r => r.Id != x.Id))
+            .Take(RelatedMax - relatedPool.Count));
+    var relatedPageCount = Math.Max(1, (int)Math.Ceiling(relatedPool.Count / (double)RelatedPageSize));
+    int.TryParse(Context.Request.Query["relatedPage"], out var relatedPage);
+    relatedPage = Math.Clamp(relatedPage, 1, relatedPageCount);
+    var related = relatedPool.Skip((relatedPage - 1) * RelatedPageSize).Take(RelatedPageSize).ToList();
+    var relatedTitle = relatedPool.Count > sameSectionCount ? "Tư liệu liên quan" : "Tin cùng chuyên mục";
     var usedImages = new HashSet<string>();
     ViewData["UsedContentImages"] = usedImages;
 
@@ -119,7 +127,7 @@
 
             @if (related.Any())
             {
-                <div class="related">
+                <div class="related" id="related-materials">
                     <h2 class="sec-title line">@SiteHelpers.T(relatedTitle)</h2>
                     <div class="grid g4">
                         @foreach (var x in related.Take(cardCount))
@@ -135,6 +143,17 @@
                     <ul class="related-list">
                         @foreach (var x in related.Skip(cardCount)) { <li><a href="@x.Url()">@x.Name</a> <time>(@x.Date().ToString("dd/MM/yyyy"))</time></li> }
                     </ul>
+                    @if (relatedPageCount > 1)
+                    {
+                        <nav class="pager related-pager" aria-label="@SiteHelpers.T("Phân trang tư liệu liên quan")">
+                            @if (relatedPage > 1) { <a href="@(Model.Url() + "?relatedPage=" + (relatedPage - 1) + "#related-materials")">‹</a> }
+                            @for (var rp = 1; rp <= relatedPageCount; rp++)
+                            {
+                                <a class="@(rp == relatedPage ? "active" : "")" href="@(Model.Url() + "?relatedPage=" + rp + "#related-materials")">@rp</a>
+                            }
+                            @if (relatedPage < relatedPageCount) { <a href="@(Model.Url() + "?relatedPage=" + (relatedPage + 1) + "#related-materials")">›</a> }
+                        </nav>
+                    }
                 </div>
             }
         </article>

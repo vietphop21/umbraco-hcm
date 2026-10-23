@@ -74,11 +74,11 @@
                                 {
                                     var subs2 = sub.MenuChildren().ToList();
                                     <li class="@(subs2.Any() ? "has-sub" : "")">
-                                        <a href="@sub.Url()">@sub.Name <span class="menu-count">(@sub.ItemCount())</span></a>
+                                        <a href="@sub.Url()">@sub.Name <span class="menu-count">(@sub.DirectItemCount())</span></a>
                                         @if (subs2.Any())
                                         {
                                             <ul class="sub sub2">
-                                                @foreach (var s2 in subs2) { <li><a href="@s2.Url()">@s2.Name <span class="menu-count">(@s2.ItemCount())</span></a></li> }
+                                                @foreach (var s2 in subs2) { <li><a href="@s2.Url()">@s2.Name <span class="menu-count">(@s2.DirectItemCount())</span></a></li> }
                                             </ul>
                                         }
                                     </li>
@@ -179,11 +179,6 @@
 <a href="#" class="to-top" aria-label="@SiteHelpers.T("Lên đầu trang")"><i class="fa fa-arrow-up"></i></a>
 
 <script src="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js"></script>
-@if (Model.Value<string>(SiteMap.UrlNameProp) == SiteMap.Map)
-{
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-}
 @if (SiteHelpers.ItemTypes.Contains(Model.ContentType.Alias))
 {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>

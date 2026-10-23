@@ -17,6 +17,7 @@
     page = Math.Min(page, totalPages);
     var items = all.Skip((page - 1) * LibrarySettings.PageSize).Take(LibrarySettings.PageSize).ToList();
     var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
     var pagerQuery = string.Join("&", query.Where(kv => kv.Key != LibraryQueryKeys.Page && !string.IsNullOrEmpty(kv.Value))
         .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value.ToString())}"));
     if (pagerQuery.Length > 0) pagerQuery += "&";

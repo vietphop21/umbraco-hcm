@@ -3,6 +3,9 @@
 @{
     Layout = "Master.cshtml";
     var latest = Model.Root().Items(8).ToList();
+var bodyText = Model.Value<string>("bodyText") ?? string.Empty;
+var bodyLength = System.Text.RegularExpressions.Regex.Replace(bodyText, "<[^>]+>", " ").Length;
+var exploreCount = !Model.Value<bool>("showContactForm") && bodyLength <= 2400 ? 8 : 4;
 }
 <div class="container page-wrap">
     <div class="two-col">
@@ -13,7 +16,7 @@
             @{
                 var explore = Model.Root().Sections().Where(s => s.Node.Id != Model.Id)
                     .OrderBy(s => s.Info.UrlName == SiteMap.Life ? 0 : s.Info.UrlName == SiteMap.Thought ? 1 : s.Info.UrlName == SiteMap.Media ? 2 : 3)
-                    .Take(4).ToList();
+                    .Take(exploreCount).ToList();
                 var usedImages = new HashSet<string>();
                 ViewData["UsedContentImages"] = usedImages;
             }

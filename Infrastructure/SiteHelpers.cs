@@ -38,6 +38,10 @@ public static class SiteHelpers
     /// <summary>Tổng số bài (mọi loại) trong chuyên mục, gồm cả chuyên mục con.</summary>
     public static int ItemCount(this IPublishedContent? section) => section.Items().Count();
 
+    /// <summary>Tổng số bài nằm trực tiếp trong chuyên mục, không cộng bài của chuyên mục con.</summary>
+    public static int DirectItemCount(this IPublishedContent? section)
+        => section?.Children().Count(x => ItemTypes.Contains(x.ContentType.Alias)) ?? 0;
+
     public static Microsoft.AspNetCore.Html.IHtmlContent CountBadge(int count)
         => new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"item-count\">({count:N0})</span>");
 
@@ -58,6 +62,23 @@ public static class SiteHelpers
 
     private static readonly Dictionary<string, (string Name, string Url)[]> SectionImageChoices = new()
     {
+        // Tin tức thường không có thumbnail riêng. Dùng ảnh tư liệu về hoạt động,
+        // không gian trưng bày và địa danh gắn với Chủ tịch Hồ Chí Minh.
+        [SiteMap.News] = new[]
+        {
+            ("museum event visitors exhibition", "/media/msiksn4w/oct2025visit-to-the-ho-chi-minh-museum-hanoi-vietnam-01.jpg"),
+            ("museum visitors students education", "/media/d3njnpcd/hanoi-vietnam-visitors-at-ho-chi-minh-museum.jpg"),
+            ("museum interior exhibition display", "/media/eiqnfkok/hanoi-vietnam-interiors-of-ho-chi-minh-museum.jpg"),
+            ("museum exhibition artifacts", "/media/dtjdmsue/hanoi-vietnam-ho-chi-minh-museum-the-pyramid.jpg"),
+            ("museum event visitors", "/media/dc4dkpna/oct2025visit-to-the-ho-chi-minh-museum-hanoi-vietnam-03.jpg"),
+            ("ba dinh square historical event", "/media/ze1dj1ts/ba-dinh-square-2007.jpg"),
+            ("ba dinh square history ceremony", "/media/fdrp4qsi/ba-dinh-square-panorama.jpg"),
+            ("mausoleum ceremony honour guards", "/media/i55mnvfw/honour-guards-at-ho-chi-minh-mausoleum-hanoi-20240123-1133-3240.jpg"),
+            ("museum archive history", "/media/ahahdmp1/hanoi-vietnam-ho-chi-minh-museum-02.jpg"),
+            ("museum archival exhibition", "/media/be3ovcqm/hanoi-vietnam-ho-chi-minh-museum-01.jpg"),
+            ("ho chi minh stilt house historical site", "/media/ogthylib/ho-chi-minhs-stilt-house-hanoi-1-38439116266.jpg"),
+            ("kim lien memorial historical site", "/media/o3earjbj/kim-lien-monuments-park.jpg")
+        },
         [SiteMap.Intro] = new[] { ("museum interior", "/media/eiqnfkok/hanoi-vietnam-interiors-of-ho-chi-minh-museum.jpg"), ("museum pyramid", "/media/dtjdmsue/hanoi-vietnam-ho-chi-minh-museum-the-pyramid.jpg"), ("museum visitors", "/media/d3njnpcd/hanoi-vietnam-visitors-at-ho-chi-minh-museum.jpg"), ("museum visit", "/media/msiksn4w/oct2025visit-to-the-ho-chi-minh-museum-hanoi-vietnam-01.jpg") },
         [SiteMap.Life] = new[] { ("ho chi minh 1946 portrait", "/media/j3jnagiz/ho-chi-minh-1946.jpg"), ("ho chi minh stilt house", "/media/ogthylib/ho-chi-minhs-stilt-house-hanoi-1-38439116266.jpg"), ("ho chi minh house", "/media/p4yexqht/ho-chi-minhs-stilt-house-hanoi-2-24622695398.jpg"), ("mausoleum", "/media/hlqpoqqr/hanoi-vietnam-mausoleum-of-ho-chi-minh-01.jpg"), ("presidential palace", "/media/oofjatxw/presidential-palace-hanoi-2012.jpg") },
         [SiteMap.Thought] = new[] { ("ho chi minh portrait", "/media/j3jnagiz/ho-chi-minh-1946.jpg"), ("museum interior", "/media/eiqnfkok/hanoi-vietnam-interiors-of-ho-chi-minh-museum.jpg"), ("museum visitors", "/media/d3njnpcd/hanoi-vietnam-visitors-at-ho-chi-minh-museum.jpg"), ("museum hanoi", "/media/0yjf02uo/ho-chi-minh-museum-hanoi-2.jpg") },
@@ -70,11 +91,36 @@ public static class SiteHelpers
         [SiteMap.Media] = new[] { ("museum visit october 2025", "/media/msiksn4w/oct2025visit-to-the-ho-chi-minh-museum-hanoi-vietnam-01.jpg"), ("museum visit", "/media/dc4dkpna/oct2025visit-to-the-ho-chi-minh-museum-hanoi-vietnam-03.jpg"), ("museum visitors", "/media/d3njnpcd/hanoi-vietnam-visitors-at-ho-chi-minh-museum.jpg"), ("museum interior", "/media/eiqnfkok/hanoi-vietnam-interiors-of-ho-chi-minh-museum.jpg"), ("doi dep", "/media/3dhkhyrz/%C4%91%C3%B4i-d%C3%A9p-b%C3%A1c-h%E1%BB%93-t%E1%BA%A1i-b%E1%BA%A3o-t%C3%A0ng-b%E1%BA%BFn-nh%C3%A0-r%E1%BB%93ng-n%C4%83m-2018-2.jpg") },
         [SiteMap.Map] = new[] { ("kim lien monuments", "/media/o3earjbj/kim-lien-monuments-park.jpg"), ("coc bo pac bo", "/media/4x5jr20o/c%E1%BB%91c-b%C3%B3.jpg"), ("tra vinh memorial", "/media/tkfljsx1/%C4%91%E1%BB%81n-th%E1%BB%9D-b%C3%A1c-h%E1%BB%93-%E1%BB%9F-tr%C3%A0-vinh.jpg"), ("nha rong", "/media/zmbjlwqb/h%E1%BB%8Dc-vi%C3%AAn-an-ninh-tham-quan-b%E1%BA%BFn-nh%C3%A0-r%E1%BB%93ng.jpg") },
     };
+    // Extra on-topic views give the main listing and sidebar enough distinct
+    // choices to avoid reusing a photo on the same page.
+    private static readonly (string Name, string Url)[] AdditionalImageChoices =
+    {
+        ("ba dinh square hanoi", "/media/d3hhycme/ba-dinh-square-hanoi.jpg"),
+        ("ba dinh square hanoi", "/media/hyho1obv/ba-dinh-square-hanoi-37609038445.jpg"),
+        ("ba dinh square", "/media/qmtpcvwi/hanoi-vietnam-ba-dinh-square.jpg"),
+        ("ho chi minh mausoleum", "/media/1sjiviol/hanoi-vietnam-ho-chi-minh-mausoleum-on-ba-dinh-square.jpg"),
+        ("ho chi minh mausoleum", "/media/tupn5wav/hanoi-vietnam-mausoleum-of-ho-chi-minh-02.jpg"),
+        ("ho chi minh mausoleum", "/media/aq1jxj1e/hanoi-vietnam-mausoleum-of-ho-chi-minh-03.jpg"),
+        ("ho chi minh mausoleum", "/media/ogff02xj/ho-chi-minh-mausoleum-in-2003-2.jpg"),
+        ("ho chi minh mausoleum", "/media/15tph2hm/ho-chi-minh-mausoleum-in-2003.jpg"),
+        ("ho chi minh mausoleum hanoi", "/media/wmxl4pbz/ho-chi-minh-mausoleum-july-2003-hanoi.jpg"),
+        ("ho chi minh mausoleum", "/media/hsopyzyr/ho-chi-minh-mausoleum.jpg"),
+        ("ho chi minh city statue", "/media/hfikv4pi/ho-chi-minh-city-ho-chi-minh-statue-2020-01-cn-03.jpg"),
+        ("ho chi minh city statue", "/media/sf4jgevh/ho-chi-minh-city-ho-chi-minh-statue-2020-01-cn-04.jpg"),
+        ("ho chi minh house", "/media/fvybk0mm/ho-chi-minh-house-3463171193-352f81b0da.jpg"),
+        ("presidential palace hanoi", "/media/2nygbfey/presidential-palace-hanoi-1.jpg"),
+        ("presidential palace hanoi", "/media/4e0lwixh/presidential-palace-hanoi-2012-2.jpg"),
+        ("presidential palace hanoi", "/media/gp4iv2g3/presidential-palace-hanoi-april-2011.jpg"),
+        ("presidential palace hanoi", "/media/h3wihu3l/presidential-palace-hanoi-panoramio.jpg"),
+        ("presidential palace hanoi", "/media/oudd2kam/presidential-palace-hanoi-vietnam.jpg"),
+        ("presidential palace hanoi", "/media/dhndda30/presidential-palace-hanoi.jpg"),
+        ("presidential palace vietnam", "/media/nkvpjz1f/presidential-palace-of-vietnam.jpg"),
+    };
     private static readonly (string Name, string Url)[] GeneralImageChoices = SectionImageChoices.Values
-        .SelectMany(images => images).DistinctBy(image => image.Url).ToArray();
+        .SelectMany(images => images).Concat(AdditionalImageChoices).DistinctBy(image => image.Url).ToArray();
 
     /// <summary>Returns a topic-matched image and avoids reusing a URL within the current page.</summary>
-    public static string? ContentImage(this IPublishedContent? item, int width, int height, ISet<string>? usedImages = null)
+    public static string? ContentImage(this IPublishedContent? item, int width, int height, ISet<string>? usedImages = null, IPublishedContent? listingSection = null)
     {
         if (item == null) return null;
         if (item.ContentType.Alias == DocTypes.Album)
@@ -90,10 +136,14 @@ public static class SiteHelpers
         var ownKey = ownMedia?.Url() ?? own;
         if (own != null && (usedImages == null || usedImages.Add(ImageUsageKey(ownKey!)))) return own;
 
-        var section = item.Ancestors().Append(item).FirstOrDefault(x =>
+        var lineage = item.Ancestors().Append(item).ToArray();
+        var inNews = lineage.Append(listingSection).Any(x => x is { } node &&
+            ((node.Value<string>(SiteMap.UrlNameProp, Cultures.Vi) ?? node.Value<string>(SiteMap.UrlNameProp)) == SiteMap.News
+             || node.Url().TrimEnd('/').EndsWith("/" + SiteMap.News, StringComparison.OrdinalIgnoreCase)));
+        var section = lineage.FirstOrDefault(x =>
             SiteMap.Sections.Any(s => (x.Value<string>(SiteMap.UrlNameProp, Cultures.Vi) ?? x.Value<string>(SiteMap.UrlNameProp)) == s.UrlName));
         var slug = section?.Value<string>(SiteMap.UrlNameProp, Cultures.Vi) ?? section?.Value<string>(SiteMap.UrlNameProp);
-        var choices = SectionImageChoices.GetValueOrDefault(slug ?? string.Empty);
+        var choices = inNews ? SectionImageChoices[SiteMap.News] : SectionImageChoices.GetValueOrDefault(slug ?? string.Empty);
         if (choices == null && item.Ancestors().Any(x => x.ContentType.Alias == DocTypes.LibraryRoot))
             choices = SectionImageChoices[SiteMap.Life];
         if (choices == null) return null;
@@ -146,12 +196,11 @@ public static class SiteHelpers
             ? (lat, lng) : null;
     }
 
-    /// <summary>Khung nhúng OpenStreetMap cho một địa danh.</summary>
+    /// <summary>Khung nhúng Google Maps cho một địa danh đã có tọa độ.</summary>
     public static string MapEmbedUrl(double lat, double lng)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;
-        var d = MapProps.EmbedDelta;
-        return string.Create(inv, $"https://www.openstreetmap.org/export/embed.html?bbox={lng - d},{lat - d},{lng + d},{lat + d}&layer=mapnik&marker={lat},{lng}");
+        return string.Create(inv, $"https://maps.google.com/maps?q={lat},{lng}&z=16&output=embed");
     }
 
     /// <summary>Node của một chuyên mục trong site map, tìm theo đường dẫn cố định.</summary>

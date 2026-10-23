@@ -189,23 +189,45 @@
     pop.querySelector('[data-qr-close]').addEventListener('click', function () { pop.hidden = true; });
 })();
 
-// Bản đồ số: cắm ghim các địa danh (Leaflet + OpenStreetMap)
+// Fill remaining desktop column space with relevant reading cards; keep their pager independent.
 (function () {
-    var el = document.getElementById('place-map');
-    if (!el || !window.L) return;
-    var places = JSON.parse(el.dataset.places || '[]');
-    var map = L.map(el, { scrollWheelZoom: false }).setView([+el.dataset.lat, +el.dataset.lng], +el.dataset.zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18, attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-    function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-    var bounds = [];
-    places.forEach(function (p) {
-        var html = (p.img ? '<img src="' + p.img + '" alt="" style="width:100%;border-radius:4px;margin-bottom:6px">' : '')
-            + '<strong>' + esc(p.name) + '</strong><p style="margin:4px 0">' + esc(p.summary) + '</p>'
-            + '<a href="' + p.url + '">Xem chi tiết »</a>';
-        L.marker([p.lat, p.lng]).addTo(map).bindPopup(html, { maxWidth: 260 });
-        bounds.push([p.lat, p.lng]);
-    });
-    if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+    var section = document.querySelector('.related-fill[data-gap-fill="true"]');
+    if (!section) return;
+    var grid = section.querySelector('.grid'), main = section.closest('.main-list');
+    var columns = section.closest('.two-col'), side = columns && columns.querySelector('.side-col');
+    if (!grid || !main || !side) return;
+    var cards = Array.prototype.slice.call(grid.children);
+    var initial = Math.min(window.innerWidth <= 991 ? 6 : 3, cards.length);
+    if (cards.length <= initial) return;
+
+    function show(count) {
+        cards.forEach(function (card, index) { card.hidden = index >= count; });
+    }
+    function sync() {
+        show(initial);
+        if (window.innerWidth <= 991) return;
+        var lastSideItem = side.lastElementChild;
+        if (!lastSideItem) return;
+        var sideEnd = lastSideItem.getBoundingClientRect().bottom;
+        var visible = initial;
+        while (visible < cards.length) {
+            var mainEnd = section.getBoundingClientRect().bottom;
+            if (sideEnd - mainEnd <= 72) break;
+            visible = Math.min(visible + 3, cards.length);
+            show(visible);
+        }
+    }
+
+    var scheduled = false;
+    function schedule() {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () {
+            scheduled = false;
+            sync();
+        });
+    }
+    schedule();
+    window.addEventListener('load', schedule, { once: true });
+    window.addEventListener('resize', schedule, { passive: true });
 })();

@@ -4,11 +4,13 @@
     Giữ gọn để cột phải không dài hơn nhiều so với nội dung chính.
 *@
 @{
-    const int VideoCount = 3;
-    const int PhotoCount = 3;
-    const int AudioCount = 3;
+    const int VideoCount = 6;
+    const int PhotoCount = 6;
+    const int AudioCount = 6;
 
     var home = Model.Root();
+    // Share page-level usage so sidebar thumbnails stay distinct from the article
+    // cards already shown in the main column.
     var usedImages = ViewData["UsedContentImages"] as HashSet<string> ?? new HashSet<string>();
     var blocks = new (IPublishedContent? Section, int Count, string Icon)[]
     {
@@ -16,21 +18,57 @@
         (home.Picked("photoSection"), PhotoCount, "fa-camera"),
         (home.Picked("audioSection"), AudioCount, "fa-volume-high"),
     };
-    var shortcuts = new (string UrlName, string Label, string Icon)[]
+    var mediaRoot = home.Section(SiteMap.Media);
+    var pdfSection = mediaRoot?.Children().FirstOrDefault(x => x.ContentType.Alias == DocTypes.Category && x.Name.Contains("PDF", StringComparison.OrdinalIgnoreCase));
+    var libraryRoot = home.LibraryRoot();
+    var quickExplore = new (IPublishedContent? Section, IPublishedContent? Lead, string Label, string Description, string Icon, int? Count, bool IsTimeline)[]
     {
-        (SiteMap.Search, "Tra cứu đa tiêu chí", "fa-magnifying-glass"),
-        (SiteMap.Periods, "Cây thư mục giai đoạn", "fa-sitemap"),
-        (SiteMap.Media, "Thư viện tư liệu số", "fa-photo-film"),
-        (SiteMap.Map, "Bản đồ số", "fa-map-location-dot"),
+        (libraryRoot, libraryRoot?.Items(1).FirstOrDefault(), "5 giai đoạn về Bác Hồ", "Tiểu sử, mốc thời gian và tư liệu theo từng chặng.", "fa-timeline", libraryRoot?.Periods().Count(), true),
+        (blocks[0].Section, blocks[0].Section?.Items(1).FirstOrDefault(), blocks[0].Section?.Name ?? "Phim tư liệu", "Phim tư liệu và phóng sự", "fa-play", null, false),
+        (blocks[1].Section, blocks[1].Section?.Items(1).FirstOrDefault(), blocks[1].Section?.Name ?? "Hình ảnh tư liệu", "Ảnh tư liệu và bộ sưu tập", "fa-camera", null, false),
+        (blocks[2].Section, blocks[2].Section?.Items(1).FirstOrDefault(), blocks[2].Section?.Name ?? "Sách nói", "Truyện kể và chương trình phát thanh", "fa-volume-high", null, false),
+        (pdfSection, pdfSection?.Items(1).FirstOrDefault(), pdfSection?.Name ?? "Tài liệu điện tử (PDF)", "Tài liệu điện tử đọc trực tuyến", "fa-file-pdf", null, false),
     };
-    string? ShortcutUrl(string urlName) => urlName == SiteMap.Periods ? home.LibraryRoot()?.Url() : home.Section(urlName)?.Url();
 }
 <aside class="side-col">
-    <nav class="side-shortcuts" aria-label="@SiteHelpers.T("Lối tắt")">
-        @foreach (var (urlName, label, icon) in shortcuts)
+    <nav class="side-shortcuts" aria-label="@SiteHelpers.T("Khám phá tư liệu")">
+        <h2 class="side-shortcuts-title">@SiteHelpers.T("Khám phá tư liệu")</h2>
+        <div class="side-shortcuts-grid">
+        @foreach (var (target, lead, label, description, icon, countOverride, isTimeline) in quickExplore)
         {
-            if (ShortcutUrl(urlName) is string url) { <a href="@url"><i class="fa @icon"></i> @SiteHelpers.T(label)</a> }
+            if (target != null)
+            {
+                var timelineImages = new[]
+                {
+                    "/media/sections/2.3-tu-tuong-dao-duc-phong-cach.jpg",
+                    "/media/j3jnagiz/ho-chi-minh-1946.jpg",
+                    "/media/ogthylib/ho-chi-minhs-stilt-house-hanoi-1-38439116266.jpg",
+                    "/media/p4yexqht/ho-chi-minhs-stilt-house-hanoi-2-24622695398.jpg",
+                    "/media/hlqpoqqr/hanoi-vietnam-mausoleum-of-ho-chi-minh-01.jpg",
+                    "/media/oofjatxw/presidential-palace-hanoi-2012.jpg"
+                };
+                var previewImage = isTimeline
+                    ? timelineImages.FirstOrDefault(image => usedImages.Add(Uri.UnescapeDataString(image))) ?? timelineImages[0]
+                    : lead?.ContentImage(360, 210, usedImages);
+                var previewTitle = isTimeline ? label : lead?.Name ?? label;
+                var previewSummary = isTimeline ? description : lead?.Value<string>(Props.Summary);
+                <article class="side-explore-card @(isTimeline ? "side-explore-card-timeline" : null)">
+                    <a class="@(isTimeline ? "side-explore-timeline" : null)" href="@target.Url()">
+                        <span class="side-explore-image @(isTimeline ? "side-explore-period-art" : null)">
+                            @if (previewImage is string image) { <img src="@image" alt="@previewTitle" loading="lazy" /> }
+                            else { <span class="noimg"><i class="fa @icon"></i></span> }
+                            <span class="side-explore-count">@(countOverride ?? target.ItemCount()) @(isTimeline ? SiteHelpers.T("giai đoạn") : SiteHelpers.T("tư liệu"))</span>
+                        </span>
+                        <span class="side-explore-copy">
+                            <small>@(isTimeline ? SiteHelpers.T("Cuộc đời và sự nghiệp") : label)</small>
+                            <strong>@previewTitle</strong>
+                            <span>@(string.IsNullOrWhiteSpace(previewSummary) ? SiteHelpers.T(description) : previewSummary)</span>
+                        </span>
+                    </a>
+                </article>
+            }
         }
+        </div>
     </nav>
     @foreach (var (block, count, icon) in blocks)
     {
@@ -38,7 +76,10 @@
         var items = block.Items(count).ToList();
         if (!items.Any()) { continue; }
         <section class="side-block">
-            <h2 class="sec-title line"><a href="@block.Url()">@block.Name @SiteHelpers.CountBadge(block.ItemCount())</a></h2>
+            <div class="side-block-head">
+                <h2 class="sec-title line"><a href="@block.Url()">@block.Name @SiteHelpers.CountBadge(block.ItemCount())</a></h2>
+                <a class="side-more" href="@block.Url()">@SiteHelpers.T("Xem tất cả") <i class="fa fa-angle-right"></i></a>
+            </div>
             @foreach (var x in items)
             {
                 <article class="side-item">
@@ -49,7 +90,6 @@
                     <h3><a href="@x.Url()">@x.Name</a></h3>
                 </article>
             }
-            <a class="side-more" href="@block.Url()">@SiteHelpers.T("Xem tất cả") <i class="fa fa-angle-right"></i></a>
         </section>
     }
 </aside>

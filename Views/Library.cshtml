@@ -18,6 +18,7 @@
     page = Math.Min(page, totalPages);
     var items = all.Skip((page - 1) * LibrarySettings.PageSize).Take(LibrarySettings.PageSize).ToList();
     var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
 
     string Qs(string? type = null, bool keepType = true)
     {
