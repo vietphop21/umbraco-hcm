@@ -24,7 +24,7 @@ public static class LibrarySeed
     public static readonly string[] Topics = { TopicEvents, TopicActivities, TopicPlaces, TopicPeople, TopicDocuments };
 
     public const string DemoPdf = "tai-lieu-demo.pdf";
-    public const string AuthorDemo = "Ban Biên tập (bản demo)";
+    public const string AuthorDemo = "Ban Biên tập";
 
     public static readonly SeedPeriod[] Periods =
     {
@@ -41,14 +41,14 @@ public static class LibrarySeed
                 new(TopicPeople, DocTypes.Article, "Người cha – người thầy đầu tiên", 1901,
                     "Ảnh hưởng của gia đình nhà nho yêu nước tới nhân cách và chí hướng của người con."),
                 new(TopicDocuments, DocTypes.PdfDocument, "Tập tư liệu: Thời niên thiếu", 1911,
-                    "Tập tư liệu điện tử tổng hợp các mốc chính giai đoạn 1890–1911 (bản demo)."),
+                    "Tập tư liệu điện tử tổng hợp các mốc chính giai đoạn 1890–1911."),
                 new(TopicDocuments, DocTypes.Video, "Phim tư liệu: Quê hương Nam Đàn", 1900,
-                    "Phim ngắn giới thiệu quê hương Nam Đàn (video demo)."),
+                    "Phim ngắn giới thiệu quê hương Nam Đàn."),
                 new(TopicDocuments, DocTypes.Audio, "Sách nói: Tuổi thơ ở làng Sen", 1895,
-                    "Sách nói kể lại những câu chuyện tuổi thơ của Người (âm thanh demo)."),
+                    "Sách nói kể lại những câu chuyện tuổi thơ của Người."),
             }),
-        new("1911–1920: Tìm đường cứu nước", 1911, 1920,
-            "Rời bến Nhà Rồng, đi qua nhiều quốc gia, vừa lao động vừa học tập để tìm con đường giải phóng dân tộc.",
+        new("1911–1941: Tìm đường cứu nước và chuẩn bị thành lập Đảng", 1911, 1941,
+            "Rời bến Nhà Rồng, đi qua nhiều quốc gia tìm con đường giải phóng dân tộc, hoạt động quốc tế và chuẩn bị thành lập Đảng.",
             new SeedItem[]
             {
                 new(TopicEvents, DocTypes.Article, "Ngày 5/6/1911: Rời bến Nhà Rồng ra đi tìm đường cứu nước", 1911,
@@ -60,16 +60,11 @@ public static class LibrarySeed
                 new(TopicPeople, DocTypes.Article, "Những người bạn trên các chuyến tàu viễn dương", 1912,
                     "Tình bạn với những người lao động gặp gỡ trên hành trình vượt đại dương."),
                 new(TopicDocuments, DocTypes.PdfDocument, "Tập tư liệu: Hành trình tìm đường cứu nước", 1920,
-                    "Tập tư liệu điện tử về giai đoạn 1911–1920 (bản demo)."),
+                    "Tập tư liệu điện tử về giai đoạn 1911–1920."),
                 new(TopicDocuments, DocTypes.Video, "Phim tư liệu: Vượt đại dương", 1913,
-                    "Phim ngắn về hành trình qua các đại dương (video demo)."),
+                    "Phim ngắn về hành trình qua các đại dương."),
                 new(TopicDocuments, DocTypes.Audio, "Sách nói: Những chuyến đi xa", 1914,
-                    "Sách nói về những năm tháng bôn ba nơi đất khách (âm thanh demo)."),
-            }),
-        new("1920–1930: Hoạt động quốc tế và chuẩn bị thành lập Đảng", 1920, 1930,
-            "Tìm thấy con đường cách mạng vô sản, hoạt động trong phong trào quốc tế và chuẩn bị về tư tưởng, tổ chức cho việc thành lập Đảng.",
-            new SeedItem[]
-            {
+                    "Sách nói về những năm tháng bôn ba nơi đất khách."),
                 new(TopicEvents, DocTypes.Article, "Ngày 3/2/1930: Hội nghị thành lập Đảng", 1930,
                     "Hội nghị hợp nhất các tổ chức cộng sản, thành lập Đảng Cộng sản Việt Nam."),
                 new(TopicActivities, DocTypes.Article, "Năm 1925: Thành lập Hội Việt Nam Cách mạng Thanh niên", 1925,
@@ -79,14 +74,14 @@ public static class LibrarySeed
                 new(TopicPeople, DocTypes.Article, "Những học viên đầu tiên của Hội Thanh niên", 1926,
                     "Lớp thanh niên yêu nước được đào tạo, trở thành lực lượng nòng cốt về sau."),
                 new(TopicDocuments, DocTypes.PdfDocument, "Tập tư liệu: Chuẩn bị thành lập Đảng", 1930,
-                    "Tập tư liệu điện tử về giai đoạn 1920–1930 (bản demo)."),
+                    "Tập tư liệu điện tử về giai đoạn 1920–1930."),
                 new(TopicDocuments, DocTypes.Video, "Phim tư liệu: Mùa xuân năm 1930", 1930,
-                    "Phim ngắn về sự kiện thành lập Đảng (video demo)."),
+                    "Phim ngắn về sự kiện thành lập Đảng."),
                 new(TopicDocuments, DocTypes.Audio, "Sách nói: Con đường đến với lý luận cách mạng", 1920,
-                    "Sách nói về bước ngoặt tư tưởng năm 1920 (âm thanh demo)."),
+                    "Sách nói về bước ngoặt tư tưởng năm 1920."),
             }),
-        new("1930–1945: Chuẩn bị và lãnh đạo Cách mạng Tháng Tám", 1930, 1945,
-            "Trở về nước, trực tiếp lãnh đạo phong trào, chuẩn bị lực lượng và lãnh đạo Tổng khởi nghĩa giành chính quyền.",
+        new("1941–1954: Lãnh đạo Cách mạng Tháng Tám và kháng chiến", 1941, 1954,
+            "Trở về nước trực tiếp lãnh đạo cách mạng, Tổng khởi nghĩa giành chính quyền, khai sinh nước Việt Nam Dân chủ Cộng hòa và lãnh đạo kháng chiến.",
             new SeedItem[]
             {
                 new(TopicEvents, DocTypes.Article, "Ngày 2/9/1945: Tuyên ngôn độc lập tại Quảng trường Ba Đình", 1945,
@@ -98,14 +93,14 @@ public static class LibrarySeed
                 new(TopicPeople, DocTypes.Article, "Đồng bào Pác Bó che chở cán bộ cách mạng", 1941,
                     "Sự đùm bọc của đồng bào các dân tộc vùng biên giới đối với cách mạng."),
                 new(TopicDocuments, DocTypes.PdfDocument, "Tập tư liệu: Cách mạng Tháng Tám", 1945,
-                    "Tập tư liệu điện tử về giai đoạn 1930–1945 (bản demo)."),
+                    "Tập tư liệu điện tử về giai đoạn 1930–1945."),
                 new(TopicDocuments, DocTypes.Video, "Phim tư liệu: Mùa thu năm 1945", 1945,
-                    "Phim ngắn về những ngày Cách mạng Tháng Tám (video demo)."),
+                    "Phim ngắn về những ngày Cách mạng Tháng Tám."),
                 new(TopicDocuments, DocTypes.Audio, "Sách nói: Những ngày ở lán Nà Nưa", 1945,
-                    "Sách nói về thời gian chuẩn bị Tổng khởi nghĩa (âm thanh demo)."),
+                    "Sách nói về thời gian chuẩn bị Tổng khởi nghĩa."),
             }),
-        new("1945–1969: Lãnh đạo kháng chiến và xây dựng đất nước", 1945, 1969,
-            "Lãnh đạo xây dựng chính quyền mới, hai cuộc kháng chiến và công cuộc xây dựng đất nước; để lại bản Di chúc lịch sử.",
+        new("1954–1969: Xây dựng miền Bắc, đấu tranh thống nhất đất nước", 1954, 1969,
+            "Lãnh đạo công cuộc xây dựng miền Bắc, đấu tranh thống nhất đất nước; để lại bản Di chúc lịch sử.",
             new SeedItem[]
             {
                 new(TopicEvents, DocTypes.Article, "Năm 1965: Bắt đầu viết bản Di chúc", 1965,
@@ -117,26 +112,41 @@ public static class LibrarySeed
                 new(TopicPeople, DocTypes.Article, "Những người phục vụ bên Bác", 1960,
                     "Câu chuyện về những người từng sống và làm việc bên Chủ tịch Hồ Chí Minh."),
                 new(TopicDocuments, DocTypes.PdfDocument, "Tập tư liệu: Kháng chiến và kiến quốc", 1969,
-                    "Tập tư liệu điện tử về giai đoạn 1945–1969 (bản demo)."),
+                    "Tập tư liệu điện tử về giai đoạn 1945–1969."),
                 new(TopicDocuments, DocTypes.Video, "Phim tư liệu: Ngôi nhà sàn", 1958,
-                    "Phim ngắn giới thiệu ngôi nhà sàn (video demo)."),
+                    "Phim ngắn giới thiệu ngôi nhà sàn."),
                 new(TopicDocuments, DocTypes.Audio, "Sách nói: Bác Hồ với thiếu nhi", 1960,
-                    "Sách nói những câu chuyện về Bác với thiếu nhi (âm thanh demo)."),
+                    "Sách nói những câu chuyện về Bác với thiếu nhi."),
+            }),
+        new(SaigonPeriodName, 0, 0,
+            "Tình cảm của Chủ tịch Hồ Chí Minh với đồng bào miền Nam và các thiết chế văn hóa mang tên Người tại TP. Hồ Chí Minh.",
+            new SeedItem[]
+            {
+                new(TopicPlaces, DocTypes.Article, "Bến Nhà Rồng trong lòng Thành phố mang tên Bác", 1911,
+                    "Di tích gắn với ngày ra đi tìm đường cứu nước, điểm đến quen thuộc của người dân Thành phố."),
+                new(TopicActivities, DocTypes.Article, "Hoạt động học tập, làm theo Bác tại các thư viện Thành phố", 1990,
+                    "Các chương trình đọc sách, trưng bày chuyên đề về Bác tại hệ thống thư viện TP. Hồ Chí Minh."),
+                new(TopicDocuments, DocTypes.Article, "Tình cảm của Bác với đồng bào miền Nam", 1960,
+                    "Những câu chuyện thể hiện tấm lòng của Bác hướng về miền Nam ruột thịt."),
             }),
     };
+
+    /// <summary>Nhánh 5 là nhánh chủ đề, không gắn mốc năm (theo Đề xuất site map).</summary>
+    public const string SaigonPeriodName = "Bác Hồ với miền Nam và Không gian Văn hóa Hồ Chí Minh tại TP.HCM";
+    public const string LibraryNewName = "Cây thư mục giai đoạn lịch sử";
 
     /// <summary>Bài Biên niên có sẵn được gắn chéo vào giai đoạn tương ứng (FR-10). Khoá: một phần tiêu đề bài.</summary>
     public static readonly (string TitlePart, int[] PeriodIndexes)[] CrossLinks =
     {
         ("1890 – 1911", new[] { 0 }),
-        ("1911 – 1930", new[] { 1, 2 }),
-        ("1930 – 1945", new[] { 3 }),
-        ("1945 – 1969", new[] { 4 }),
-        ("Tóm tắt tiểu sử", new[] { 0, 1, 2, 3, 4 }),
+        ("1911 – 1930", new[] { 1 }),
+        ("1930 – 1945", new[] { 1, 2 }),
+        ("1945 – 1969", new[] { 2, 3 }),
+        ("Tóm tắt tiểu sử", new[] { 0, 1, 2, 3 }),
     };
 
     public static string Body(SeedPeriod p, SeedItem i) =>
         $"<p>{i.Summary}</p>" +
         $"<h3>Bối cảnh giai đoạn {p.From}–{p.To}</h3><p>{p.Description}</p>" +
-        "<p>Nội dung chi tiết sẽ được Ban biên tập bổ sung từ nguồn tư liệu chính thức.</p>";
+        "";
 }

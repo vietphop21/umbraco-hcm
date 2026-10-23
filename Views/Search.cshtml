@@ -1,44 +1,94 @@
 ﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @{
     Layout = "Master.cshtml";
-    const int pageSize = 12;
-    var q = Context.Request.Query["q"].ToString().Trim();
-    int.TryParse(Context.Request.Query["page"], out var page);
-    var all = q.Length > 0 ? Model.Root().Search(q) : new List<IPublishedContent>();
-    var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)pageSize));
-    page = Math.Clamp(page, 1, totalPages);
-    var results = all.Skip((page - 1) * pageSize).Take(pageSize);
+    var home = Model.Root();
+    var periods = home.LibraryRoot()?.Periods().ToList() ?? new();
+    var query = Context.Request.Query;
+    int? IntQ(string key) => int.TryParse(query[key], out var v) ? v : null;
+    var filter = new LibraryFilter(query[LibraryQueryKeys.Keyword].ToString().Trim(), IntQ(LibraryQueryKeys.Period),
+        query[LibraryQueryKeys.Type].ToString(), IntQ(LibraryQueryKeys.FromYear), IntQ(LibraryQueryKeys.ToYear),
+        query[LibraryQueryKeys.Author].ToString().Trim());
+    var isFiltered = !string.IsNullOrEmpty(filter.Keyword) || filter.PeriodId != null || !string.IsNullOrEmpty(filter.Type)
+                     || filter.FromYear != null || filter.ToYear != null || !string.IsNullOrEmpty(filter.Author);
+
+    var all = LibraryQuery.Find(home, filter);
+    var page = Math.Max(1, IntQ(LibraryQueryKeys.Page) ?? 1);
+    var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)LibrarySettings.PageSize));
+    page = Math.Min(page, totalPages);
+    var items = all.Skip((page - 1) * LibrarySettings.PageSize).Take(LibrarySettings.PageSize).ToList();
+    var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
+    var pagerQuery = string.Join("&", query.Where(kv => kv.Key != LibraryQueryKeys.Page && !string.IsNullOrEmpty(kv.Value))
+        .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value.ToString())}"));
+    if (pagerQuery.Length > 0) pagerQuery += "&";
 }
-<div class="container page-wrap">
-    <div class="two-col">
-        <div class="main-list">
-            <h1 class="sec-title line">@Model.Name</h1>
-            <form class="search-big" method="get">
-                <input type="search" name="q" value="@q" placeholder="@SiteHelpers.T("Nhập từ khóa (có dấu hoặc không dấu)...")" />
-                <button type="submit"><i class="fa fa-search"></i> @SiteHelpers.T("Tìm")</button>
+<div class="container page-wrap library">
+    <partial name="Site/Breadcrumb" />
+    <div class="lib-head">
+        <h1 class="sec-title line">@SiteHelpers.T("Tra cứu đa tiêu chí")</h1>
+        <p class="lib-desc">@SiteHelpers.T("Tìm toàn văn và lọc theo nhan đề, tác giả, năm, loại hình, giai đoạn lịch sử.")</p>
+    </div>
+    <div class="lib-grid">
+        <aside class="lib-side">
+            <form class="lib-filter" method="get" action="@Model.Url()">
+                <h2><i class="fa fa-filter"></i> @SiteHelpers.T("Lọc tra cứu")</h2>
+                <label>@SiteHelpers.T("Nhan đề / từ khóa")
+                    <input type="search" name="@LibraryQueryKeys.Keyword" value="@filter.Keyword" placeholder="@SiteHelpers.T("Nhập từ khóa (có dấu hoặc không dấu)...")" />
+                </label>
+                <label>@SiteHelpers.T("Tác giả")
+                    <input type="search" name="@LibraryQueryKeys.Author" value="@filter.Author" />
+                </label>
+                <label>@SiteHelpers.T("Giai đoạn")
+                    <select name="@LibraryQueryKeys.Period">
+                        <option value="">@SiteHelpers.T("Tất cả giai đoạn")</option>
+                        @foreach (var p in periods) { <option value="@p.Id" selected="@(filter.PeriodId == p.Id)">@p.Name</option> }
+                    </select>
+                </label>
+                <label>@SiteHelpers.T("Loại hình")
+                    <select name="@LibraryQueryKeys.Type">
+                        <option value="">@SiteHelpers.T("Tất cả loại")</option>
+                        @foreach (var t in LibraryQuery.Types) { <option value="@t.Alias" selected="@(filter.Type == t.Alias)">@SiteHelpers.T(t.Label)</option> }
+                    </select>
+                </label>
+                <div class="row2">
+                    <label>@SiteHelpers.T("Từ năm")
+                        <input type="number" name="@LibraryQueryKeys.FromYear" min="@LibrarySettings.MinYear" value="@filter.FromYear" placeholder="@LibrarySettings.MinYear" />
+                    </label>
+                    <label>@SiteHelpers.T("Đến năm")
+                        <input type="number" name="@LibraryQueryKeys.ToYear" value="@filter.ToYear" placeholder="@DateTime.Now.Year" />
+                    </label>
+                </div>
+                <div class="actions">
+                    <button type="submit"><i class="fa fa-magnifying-glass"></i> @SiteHelpers.T("Tra cứu")</button>
+                    @if (isFiltered) { <a href="@Model.Url()">@SiteHelpers.T("Xóa lọc")</a> }
+                </div>
             </form>
-            @if (q.Length > 0)
+        </aside>
+        <section class="lib-main">
+            <p class="lib-count">@SiteHelpers.T("Tìm thấy") <strong>@all.Count</strong> @SiteHelpers.T("tư liệu")</p>
+            @foreach (var x in items)
             {
-                <p style="margin-bottom:16px">@SiteHelpers.T("Tìm thấy") <strong>@all.Count</strong> @SiteHelpers.T("kết quả cho") "<strong>@q</strong>"</p>
-                @foreach (var x in results)
-                {
-                    <article class="list-item">
+                var type = x.ContentType.Alias;
+                <article class="lib-item">
+                    <a class="thumb" href="@x.Url()">
+                        @if ((x.ContentImage(480, 320, usedImages) ?? x.ImgFull(480)) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @LibraryQuery.TypeIcon(type)"></i></span> }
+                        <span class="type-badge"><i class="fa @LibraryQuery.TypeIcon(type)"></i> @LibraryQuery.TypeLabel(type)</span>
+                    </a>
+                    <div class="lib-text">
                         <h3><a href="@x.Url()">@x.Name</a></h3>
-                        <div class="list-row">
-                            <a class="thumb" href="@x.Url()">
-                                @if (x.Img(360, 240) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
-                            </a>
-                            <div class="list-text">
-                                <time>@x.DateText()</time>
-                                <p class="sapo">@x.Value("summary")</p>
-                                <a class="more" href="@x.Url()">@SiteHelpers.T("Xem chi tiết »")</a>
-                            </div>
+                        <div class="lib-meta">
+                            <span><i class="fa-regular fa-calendar"></i> @x.Year()</span>
+                            @if ((x.Value<string>(LibraryProps.Author) ?? x.Value<string>(Props.Source)) is string au && au.Length > 0) { <span><i class="fa fa-user-pen"></i> @au</span> }
+                            @foreach (var p in x.LinkedPeriods()) { <a class="period-chip" href="@p.Url()">@p.YearRange()</a> }
                         </div>
-                    </article>
-                }
-                <partial name="Site/Pager" model='(page, totalPages, "q=" + Uri.EscapeDataString(q) + "&")' />
+                        <p class="sapo">@x.Value(Props.Summary)</p>
+                    </div>
+                </article>
             }
-        </div>
-        <partial name="Site/Sidebar" />
+            @if (!all.Any()) { <p class="empty">@SiteHelpers.T("Không có tư liệu phù hợp với điều kiện lọc.")</p> }
+            <partial name="Site/Pager" model="(page, totalPages, pagerQuery)" />
+        </section>
     </div>
 </div>
+
+<partial name="Site/OtherSections" />

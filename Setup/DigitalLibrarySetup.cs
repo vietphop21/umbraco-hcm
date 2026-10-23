@@ -305,7 +305,8 @@ public class DigitalLibrarySetupHandler : INotificationHandler<UmbracoApplicatio
 
     private static void Set(IContent c, string alias, object? value)
     {
-        var pt = c.Properties[alias]?.PropertyType;
+        if (!c.Properties.TryGetValue(alias, out var prop) || prop == null) return;
+        var pt = prop.PropertyType;
         if (pt == null) return;
         if (pt.VariesByCulture()) c.SetValue(alias, value, Cultures.Vi);
         else c.SetValue(alias, value);

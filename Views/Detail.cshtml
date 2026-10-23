@@ -3,7 +3,33 @@
     Layout = "Master.cshtml";
     var type = Model.ContentType.Alias;
     var parent = Model.Parent;
-    var related = parent?.Items(9).Where(x => x.Id != Model.Id).Take(8).ToList() ?? new();
+    const int RelatedMin = 4;
+    const int RelatedMax = 48;
+    const int RelatedPageSize = 12;
+    const int ShortBodyCardCount = 12;
+    const int ShortBody = 600;
+    var plainBody = System.Text.RegularExpressions.Regex.Replace(Model.Value<string>(Props.BodyText) ?? "", "<[^>]+>", " ").Trim();
+    // Bài ngắn: hiện thêm thẻ liên quan để cột chính cân với cột phải.
+    var cardCount = plainBody.Length < ShortBody ? ShortBodyCardCount : RelatedMin;
+    var relatedPool = parent?.Items(RelatedMax).Where(x => x.Id != Model.Id).Take(RelatedMax).ToList() ?? new();
+    var sameSectionCount = relatedPool.Count;
+    if (relatedPool.Count < RelatedMax)
+        relatedPool.AddRange(Model.Root().Items(RelatedMax * 3)
+            .Where(x => x.Id != Model.Id && relatedPool.All(r => r.Id != x.Id))
+            .Take(RelatedMax - relatedPool.Count));
+    var relatedPageCount = Math.Max(1, (int)Math.Ceiling(relatedPool.Count / (double)RelatedPageSize));
+    int.TryParse(Context.Request.Query["relatedPage"], out var relatedPage);
+    relatedPage = Math.Clamp(relatedPage, 1, relatedPageCount);
+    var related = relatedPool.Skip((relatedPage - 1) * RelatedPageSize).Take(RelatedPageSize).ToList();
+    var relatedTitle = relatedPool.Count > sameSectionCount ? "Tư liệu liên quan" : "Tin cùng chuyên mục";
+    var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
+
+    // Đoạn mở đầu trùng sapo thì không lặp lại trong thân bài.
+    var summaryText = Model.Value<string>(Props.Summary)?.Trim();
+    var bodyHtml = Model.Value<string>(Props.BodyText) ?? string.Empty;
+    if (!string.IsNullOrEmpty(summaryText) && bodyHtml.TrimStart().StartsWith($"<p>{summaryText}</p>"))
+        bodyHtml = bodyHtml.TrimStart()[$"<p>{summaryText}</p>".Length..];
     var youtube = SiteHelpers.YoutubeEmbed(Model.Value<string>("youtubeUrl"));
     var videoFile = Model.Value<IPublishedContent>("videoFile")?.Url();
     var audioFile = Model.Value<IPublishedContent>("audioFile")?.Url();
@@ -24,34 +50,32 @@
                     <button onclick="window.print()" title="@SiteHelpers.T("In bài viết")"><i class="fa fa-print"></i></button>
                     <a href="mailto:?subject=@Uri.EscapeDataString(Model.Name ?? "")&body=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Model.Url())" title="@SiteHelpers.T("Gửi email")"><i class="fa fa-envelope"></i></a>
                     <button onclick="navigator.clipboard.writeText(location.href);this.title='@SiteHelpers.T("Đã sao chép")'" title="@SiteHelpers.T("Sao chép liên kết")"><i class="fa fa-link"></i></button>
+                    <button type="button" data-qr title="@SiteHelpers.T("Mã QR chia sẻ")" aria-label="@SiteHelpers.T("Mã QR chia sẻ")"><i class="fa fa-qrcode"></i></button>
                 </div>
             </div>
 
+            <div class="qr-pop" hidden>
+                <div class="qr-box"></div>
+                <p>@SiteHelpers.T("Quét mã để mở tài liệu trên điện thoại")</p>
+                <button type="button" data-qr-close>@SiteHelpers.T("Đóng")</button>
+            </div>
             <h1>@Model.Name</h1>
             @if (Model.HasValue("summary")) { <p class="detail-sapo">@Model.Value("summary")</p> }
 
-            @if (type == "videoItem")
+            @if (type == DocTypes.Video && (youtube != null || videoFile != null))
             {
                 <div class="player">
                     @if (youtube != null) { <iframe src="@youtube" allowfullscreen allow="autoplay; encrypted-media"></iframe> }
-                    else if (videoFile != null) { <video controls preload="metadata" poster="@Model.Img(960, 540)" src="@videoFile"></video> }
-                    else
-                    {
-                        <div class="player-empty">
-                            @if (Model.Img(960, 540) is string poster) { <img src="@poster" alt="" /> }
-                            <span><i class="fa fa-circle-play"></i>@SiteHelpers.T("Video đang được cập nhật")</span>
-                        </div>
-                    }
+                    else { <video controls preload="metadata" poster="@Model.Img(960, 540)" src="@videoFile"></video> }
                 </div>
             }
-            @if (type == "audioItem")
+            @if (type == DocTypes.Audio && audioFile != null)
             {
                 <div class="audio-box">
                     @if (Model.Img(200, 200) is string cover) { <img src="@cover" alt="" /> }
                     <div>
                         <strong><i class="fa fa-headphones"></i> @SiteHelpers.T("Nghe audio")</strong>
-                        @if (audioFile != null) { <audio class="audio-player" controls preload="metadata" src="@audioFile"></audio> }
-                        else { <p class="empty">@SiteHelpers.T("File audio đang được cập nhật.")</p> }
+                        <audio class="audio-player" controls preload="metadata" src="@audioFile"></audio>
                     </div>
                 </div>
             }
@@ -83,7 +107,12 @@
                         <p class="flipbook-note"><i class="fa fa-lock"></i> @SiteHelpers.T("Tài liệu chỉ được xem trực tuyến, không cho phép tải về.")</p>
                     </div>
                 }
-                else { <p class="empty">@SiteHelpers.T("Tài liệu đang được cập nhật.")</p> }
+            }
+            @if (Model.Coordinates() is { } pos)
+            {
+                <div class="place-embed">
+                    <iframe src="@SiteHelpers.MapEmbedUrl(pos.Lat, pos.Lng)" title="@SiteHelpers.T("Bản đồ") @Model.Name" loading="lazy"></iframe>
+                </div>
             }
             @{ var linkedPeriods = Model.LinkedPeriods().ToList(); }
             @if (linkedPeriods.Any())
@@ -93,30 +122,43 @@
                 </p>
             }
 
-            <div class="detail-body" id="detail-body">@Model.Value("bodyText")</div>
+            <div class="detail-body" id="detail-body">@Html.Raw(bodyHtml)</div>
             @if (Model.HasValue("source")) { <p class="source">@Model.Value("source")</p> }
 
             @if (related.Any())
             {
-                <div class="related">
-                    <h2 class="sec-title line">@SiteHelpers.T("Tin cùng chuyên mục")</h2>
+                <div class="related" id="related-materials">
+                    <h2 class="sec-title line">@SiteHelpers.T(relatedTitle)</h2>
                     <div class="grid g4">
-                        @foreach (var x in related.Take(4))
+                        @foreach (var x in related.Take(cardCount))
                         {
                             <article class="item-v">
                                 <a class="thumb" href="@x.Url()">
-                                    @if (x.Img(400, 250) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
+                                    @if (x.ContentImage(400, 250, usedImages) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa fa-image"></i></span> }
                                 </a>
                                 <h3><a href="@x.Url()">@x.Name</a></h3>
                             </article>
                         }
                     </div>
                     <ul class="related-list">
-                        @foreach (var x in related.Skip(4)) { <li><a href="@x.Url()">@x.Name</a> <time>(@x.Date().ToString("dd/MM/yyyy"))</time></li> }
+                        @foreach (var x in related.Skip(cardCount)) { <li><a href="@x.Url()">@x.Name</a> <time>(@x.Date().ToString("dd/MM/yyyy"))</time></li> }
                     </ul>
+                    @if (relatedPageCount > 1)
+                    {
+                        <nav class="pager related-pager" aria-label="@SiteHelpers.T("Phân trang tư liệu liên quan")">
+                            @if (relatedPage > 1) { <a href="@(Model.Url() + "?relatedPage=" + (relatedPage - 1) + "#related-materials")">‹</a> }
+                            @for (var rp = 1; rp <= relatedPageCount; rp++)
+                            {
+                                <a class="@(rp == relatedPage ? "active" : "")" href="@(Model.Url() + "?relatedPage=" + rp + "#related-materials")">@rp</a>
+                            }
+                            @if (relatedPage < relatedPageCount) { <a href="@(Model.Url() + "?relatedPage=" + (relatedPage + 1) + "#related-materials")">›</a> }
+                        </nav>
+                    }
                 </div>
             }
         </article>
         <partial name="Site/Sidebar" />
     </div>
 </div>
+
+<partial name="Site/OtherSections" />

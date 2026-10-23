@@ -1,56 +1,94 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@*
+    Cột phải dùng chung: Phim tư liệu, Hình ảnh tư liệu, Sách nói (theo cấu hình node Trang chủ) và lối tắt tới các chức năng chính.
+    Giữ gọn để cột phải không dài hơn nhiều so với nội dung chính.
+*@
 @{
-    // Cột phải dùng chung: Tư liệu Video / Ảnh / Audio (lấy theo cấu hình ở node Trang chủ)
-    var home = Model.Root();
-    var videos = home.Picked("videoSection");
-    var photos = home.Picked("photoSection");
-    var audios = home.Picked("audioSection");
+    const int VideoCount = 6;
+    const int PhotoCount = 6;
+    const int AudioCount = 6;
 
-    IHtmlContent Thumb(IPublishedContent x, int w, int h, string icon)
+    var home = Model.Root();
+    // Share page-level usage so sidebar thumbnails stay distinct from the article
+    // cards already shown in the main column.
+    var usedImages = ViewData["UsedContentImages"] as HashSet<string> ?? new HashSet<string>();
+    var blocks = new (IPublishedContent? Section, int Count, string Icon)[]
     {
-        var img = x.Img(w, h);
-        var inner = img != null
-            ? $"<img src=\"{img}\" alt=\"{System.Net.WebUtility.HtmlEncode(x.Name)}\" loading=\"lazy\" />"
-            : "<span class=\"noimg\"><i class=\"fa fa-image\"></i></span>";
-        return new HtmlString($"<a class=\"thumb\" href=\"{x.Url()}\">{inner}<span class=\"ico\"><i class=\"fa {icon}\"></i></span></a>");
-    }
+        (home.Picked("videoSection"), VideoCount, "fa-play"),
+        (home.Picked("photoSection"), PhotoCount, "fa-camera"),
+        (home.Picked("audioSection"), AudioCount, "fa-volume-high"),
+    };
+    var mediaRoot = home.Section(SiteMap.Media);
+    var pdfSection = mediaRoot?.Children().FirstOrDefault(x => x.ContentType.Alias == DocTypes.Category && x.Name.Contains("PDF", StringComparison.OrdinalIgnoreCase));
+    var libraryRoot = home.LibraryRoot();
+    var quickExplore = new (IPublishedContent? Section, IPublishedContent? Lead, string Label, string Description, string Icon, int? Count, bool IsTimeline)[]
+    {
+        (libraryRoot, libraryRoot?.Items(1).FirstOrDefault(), "5 giai đoạn về Bác Hồ", "Tiểu sử, mốc thời gian và tư liệu theo từng chặng.", "fa-timeline", libraryRoot?.Periods().Count(), true),
+        (blocks[0].Section, blocks[0].Section?.Items(1).FirstOrDefault(), blocks[0].Section?.Name ?? "Phim tư liệu", "Phim tư liệu và phóng sự", "fa-play", null, false),
+        (blocks[1].Section, blocks[1].Section?.Items(1).FirstOrDefault(), blocks[1].Section?.Name ?? "Hình ảnh tư liệu", "Ảnh tư liệu và bộ sưu tập", "fa-camera", null, false),
+        (blocks[2].Section, blocks[2].Section?.Items(1).FirstOrDefault(), blocks[2].Section?.Name ?? "Sách nói", "Truyện kể và chương trình phát thanh", "fa-volume-high", null, false),
+        (pdfSection, pdfSection?.Items(1).FirstOrDefault(), pdfSection?.Name ?? "Tài liệu điện tử (PDF)", "Tài liệu điện tử đọc trực tuyến", "fa-file-pdf", null, false),
+    };
 }
 <aside class="side-col">
-    @if (videos != null)
-    {
-        var items = videos.Items(4).ToList();
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@videos.Url()">@videos.Name @SiteHelpers.CountBadge(videos.ItemCount())</a></h2>
-            @if (items.Any())
+    <nav class="side-shortcuts" aria-label="@SiteHelpers.T("Khám phá tư liệu")">
+        <h2 class="side-shortcuts-title">@SiteHelpers.T("Khám phá tư liệu")</h2>
+        <div class="side-shortcuts-grid">
+        @foreach (var (target, lead, label, description, icon, countOverride, isTimeline) in quickExplore)
+        {
+            if (target != null)
             {
-                <article class="item-v">
-                    @Thumb(items[0], 480, 300, "fa-play")
-                    <h3><a href="@items[0].Url()">@items[0].Name</a></h3>
+                var timelineImages = new[]
+                {
+                    "/media/sections/2.3-tu-tuong-dao-duc-phong-cach.jpg",
+                    "/media/j3jnagiz/ho-chi-minh-1946.jpg",
+                    "/media/ogthylib/ho-chi-minhs-stilt-house-hanoi-1-38439116266.jpg",
+                    "/media/p4yexqht/ho-chi-minhs-stilt-house-hanoi-2-24622695398.jpg",
+                    "/media/hlqpoqqr/hanoi-vietnam-mausoleum-of-ho-chi-minh-01.jpg",
+                    "/media/oofjatxw/presidential-palace-hanoi-2012.jpg"
+                };
+                var previewImage = isTimeline
+                    ? timelineImages.FirstOrDefault(image => usedImages.Add(Uri.UnescapeDataString(image))) ?? timelineImages[0]
+                    : lead?.ContentImage(360, 210, usedImages);
+                var previewTitle = isTimeline ? label : lead?.Name ?? label;
+                var previewSummary = isTimeline ? description : lead?.Value<string>(Props.Summary);
+                <article class="side-explore-card @(isTimeline ? "side-explore-card-timeline" : null)">
+                    <a class="@(isTimeline ? "side-explore-timeline" : null)" href="@target.Url()">
+                        <span class="side-explore-image @(isTimeline ? "side-explore-period-art" : null)">
+                            @if (previewImage is string image) { <img src="@image" alt="@previewTitle" loading="lazy" /> }
+                            else { <span class="noimg"><i class="fa @icon"></i></span> }
+                            <span class="side-explore-count">@(countOverride ?? target.ItemCount()) @(isTimeline ? SiteHelpers.T("giai đoạn") : SiteHelpers.T("tư liệu"))</span>
+                        </span>
+                        <span class="side-explore-copy">
+                            <small>@(isTimeline ? SiteHelpers.T("Cuộc đời và sự nghiệp") : label)</small>
+                            <strong>@previewTitle</strong>
+                            <span>@(string.IsNullOrWhiteSpace(previewSummary) ? SiteHelpers.T(description) : previewSummary)</span>
+                        </span>
+                    </a>
                 </article>
             }
-            @foreach (var x in items.Skip(1))
-            {
-                <article class="item-h">@Thumb(x, 200, 125, "fa-play")<h3><a href="@x.Url()">@x.Name</a></h3></article>
-            }
-        </section>
-    }
-    @if (photos != null)
+        }
+        </div>
+    </nav>
+    @foreach (var (block, count, icon) in blocks)
     {
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@photos.Url()">@photos.Name @SiteHelpers.CountBadge(photos.ItemCount())</a></h2>
-            @foreach (var x in photos.Items(3))
+        if (block == null) { continue; }
+        var items = block.Items(count).ToList();
+        if (!items.Any()) { continue; }
+        <section class="side-block">
+            <div class="side-block-head">
+                <h2 class="sec-title line"><a href="@block.Url()">@block.Name @SiteHelpers.CountBadge(block.ItemCount())</a></h2>
+                <a class="side-more" href="@block.Url()">@SiteHelpers.T("Xem tất cả") <i class="fa fa-angle-right"></i></a>
+            </div>
+            @foreach (var x in items)
             {
-                <article class="item-h">@Thumb(x, 200, 125, "fa-camera")<h3><a href="@x.Url()">@x.Name</a></h3></article>
-            }
-        </section>
-    }
-    @if (audios != null)
-    {
-        <section class="sec">
-            <h2 class="sec-title line"><a href="@audios.Url()">@audios.Name @SiteHelpers.CountBadge(audios.ItemCount())</a></h2>
-            @foreach (var x in audios.Items(4))
-            {
-                <article class="item-h">@Thumb(x, 200, 125, "fa-volume-high")<h3><a href="@x.Url()">@x.Name</a></h3></article>
+                <article class="side-item">
+                    <a class="side-thumb" href="@x.Url()">
+                        @if (x.ContentImage(192, 128, usedImages) is string img) { <img src="@img" alt="@x.Name" loading="lazy" /> } else { <span class="noimg"><i class="fa @icon"></i></span> }
+                        <span class="side-ico"><i class="fa @icon"></i></span>
+                    </a>
+                    <h3><a href="@x.Url()">@x.Name</a></h3>
+                </article>
             }
         </section>
     }

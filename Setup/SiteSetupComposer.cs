@@ -20,10 +20,12 @@ public class SiteSetupComposer : IComposer
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, SiteSetupHandler>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, MultilingualSetupHandler>();
         builder.AddNotificationHandler<UmbracoApplicationStartedNotification, DigitalLibrarySetupHandler>();
+        builder.AddNotificationHandler<UmbracoApplicationStartedNotification, SiteMapSetupHandler>();
         // Lần chạy đầu: Umbraco tự cài xong mới bắn notification này -> tạo dữ liệu ngay, không cần chạy lại
         builder.AddNotificationHandler<UnattendedInstallNotification, SiteSetupHandler>();
         builder.AddNotificationHandler<UnattendedInstallNotification, MultilingualSetupHandler>();
         builder.AddNotificationHandler<UnattendedInstallNotification, DigitalLibrarySetupHandler>();
+        builder.AddNotificationHandler<UnattendedInstallNotification, SiteMapSetupHandler>();
     }
 }
 
@@ -342,7 +344,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
     private IMedia? NextImage() => _pool.Count == 0 ? null : _pool[_poolIndex++ % _pool.Count];
 
     private IMedia? FindImage(string keyword)
-        => _pool.FirstOrDefault(m => m.Name!.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ?? NextImage();
+        => _pool.FirstOrDefault(m => m.Name!.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 
     private string Credit(IMedia? m) => m != null && _credits.TryGetValue(m.Key, out var c) ? c : "";
 
@@ -422,10 +424,8 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         var home = _content.Create("Trang chủ", Constants.System.Root, "home");
         home.SetValue("siteName", "Hồ Chí Minh");
         home.SetValue("slogan", "Cổng thông tin tư liệu – học tập – nghiên cứu");
-        home.SetValue("footerOrg", "Cơ quan chủ quản: Ban Biên tập Cổng thông tin (demo)");
-        home.SetValue("footerCopyright", "Bản quyền thuộc về Ban Biên tập. Ghi rõ nguồn khi phát hành lại thông tin từ website này.");
-        home.SetValue("footerAddress", "Số 1, đường Mẫu, quận Demo, Hà Nội");
-        home.SetValue("footerEmail", "toasoan@example.vn");
+        home.SetValue("footerOrg", HcmPortal.Infrastructure.SiteMap.OrgName);
+        home.SetValue("footerCopyright", HcmPortal.Infrastructure.SiteMap.Copyright);
         home.SetValue("websiteLinks", "Cổng Thông tin điện tử Chính phủ|https://chinhphu.vn\nBáo Nhân Dân|https://nhandan.vn\nThông tấn xã Việt Nam|https://vnanet.vn\nĐài Truyền hình Việt Nam|https://vtv.vn\nĐài Tiếng nói Việt Nam|https://vov.vn");
         _content.SaveAndPublish(home);
 
@@ -471,7 +471,7 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
         var museum = Hidden("Bảo tàng 3D");
         foreach (var name in SeedData.Museums)
         {
-            var img = FindImage(SeedArticles.MuseumQuery.GetValueOrDefault(name, name));
+            var img = SeedArticles.MuseumQuery.TryGetValue(name, out var query) ? FindImage(query) : null;
             Create(name, museum, "museumItem", c =>
             {
                 c.SetValue("link", "#");
@@ -549,13 +549,8 @@ public class SiteSetupHandler : INotificationHandler<UmbracoApplicationStartedNo
             });
         }
 
-        Page("Giới thiệu", "textPage",
-            "<p>Cổng thông tin là kênh cung cấp tư liệu, tin tức về cuộc đời, sự nghiệp, tư tưởng, đạo đức, phong cách Hồ Chí Minh; phục vụ công tác tuyên truyền, giáo dục, nghiên cứu và học tập.</p>" +
-            "<h2>Mục tiêu</h2><ul><li>Cung cấp nguồn tư liệu chính thống, tin cậy.</li><li>Số hóa, lưu trữ ảnh, video, audio tư liệu.</li><li>Lan tỏa phong trào học tập và làm theo tấm gương đạo đức.</li></ul>" +
-            "<h2>Chuyên mục chính</h2><p>Tin tức; Cuộc đời, sự nghiệp; Tư tưởng, đạo đức, phong cách; Tủ sách điện tử; Hồ Chí Minh và thế giới; Học và làm theo Bác; Multimedia.</p>" +
-            "<p><em>Nội dung trang này là dữ liệu demo, quản trị viên chỉnh sửa trong trang quản trị.</em></p>");
-        Page("Liên hệ", "textPage",
-            "<p>Mọi ý kiến đóng góp, đề nghị cung cấp tư liệu xin gửi về Ban Biên tập theo biểu mẫu dưới đây hoặc qua email ở chân trang. Chúng tôi sẽ phản hồi trong thời gian sớm nhất.</p>", form: true);
+        Page("Giới thiệu", "textPage", SiteMapContent.IntroBody());
+        Page("Liên hệ", "textPage", SiteMapContent.ContactBody, form: true);
         Page("Sơ đồ website", "sitemapPage");
     }
 }

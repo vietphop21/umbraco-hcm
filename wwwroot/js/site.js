@@ -86,11 +86,43 @@
         try { localStorage.setItem(s.zoomKey, z); } catch (e) { }
     }
     render(current());
+
+    var contrastBtn = fab.querySelector('[data-a11y="contrast"]');
+    var speakBtn = fab.querySelector('[data-a11y="speak"]');
+    function setContrast(on) {
+        if (on) d.dataset.contrast = 'high'; else delete d.dataset.contrast;
+        contrastBtn.setAttribute('aria-pressed', on);
+        try { localStorage.setItem(s.contrastKey, on ? '1' : '0'); } catch (e) { }
+    }
+    contrastBtn.setAttribute('aria-pressed', d.dataset.contrast === 'high');
+
+    // Đọc văn bản bằng giọng nói (Web Speech API của trình duyệt, giọng tiếng Việt)
+    var synth = window.speechSynthesis;
+    if (!synth) speakBtn.hidden = true;
+    function stopSpeak() { synth.cancel(); speakBtn.setAttribute('aria-pressed', false); }
+    function speak() {
+        if (synth.speaking) { stopSpeak(); return; }
+        var src = document.getElementById('detail-body') || document.querySelector('.site-main');
+        var title = document.querySelector('.site-main h1');
+        var text = ((title ? title.innerText + '. ' : '') + (src ? src.innerText : '')).trim();
+        if (!text) return;
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = s.lang;
+        var voice = synth.getVoices().filter(function (v) { return v.lang === s.lang; })[0];
+        if (voice) u.voice = voice;
+        u.onend = stopSpeak;
+        speakBtn.setAttribute('aria-pressed', true);
+        synth.speak(u);
+    }
+
     fab.addEventListener('click', function (e) {
         var b = e.target.closest('[data-a11y]');
         if (!b) return;
         var a = b.dataset.a11y;
-        if (a === 'zoom-in') setZoom(current() + step);
+        if (a === 'toggle') b.setAttribute('aria-expanded', fab.classList.toggle('open'));
+        else if (a === 'contrast') setContrast(d.dataset.contrast !== 'high');
+        else if (a === 'speak') speak();
+        else if (a === 'zoom-in') setZoom(current() + step);
         else if (a === 'zoom-out') setZoom(current() - step);
         else if (a === 'zoom-reset') setZoom(min);
     });
@@ -142,4 +174,60 @@
     }).catch(function () {
         stage.innerHTML = '<p class="flipbook-status">' + box.dataset.error + '</p>';
     });
+})();
+
+// Mã QR chia sẻ trang tài liệu, tạo phía trình duyệt
+(function () {
+    var btn = document.querySelector('[data-qr]');
+    var pop = document.querySelector('.qr-pop');
+    if (!btn || !pop || !window.QRCode) return;
+    var box = pop.querySelector('.qr-box'), made = false;
+    btn.addEventListener('click', function () {
+        if (!made) { new QRCode(box, { text: location.href, width: 180, height: 180 }); made = true; }
+        pop.hidden = !pop.hidden;
+    });
+    pop.querySelector('[data-qr-close]').addEventListener('click', function () { pop.hidden = true; });
+})();
+
+// Fill remaining desktop column space with relevant reading cards; keep their pager independent.
+(function () {
+    var section = document.querySelector('.related-fill[data-gap-fill="true"]');
+    if (!section) return;
+    var grid = section.querySelector('.grid'), main = section.closest('.main-list');
+    var columns = section.closest('.two-col'), side = columns && columns.querySelector('.side-col');
+    if (!grid || !main || !side) return;
+    var cards = Array.prototype.slice.call(grid.children);
+    var initial = Math.min(window.innerWidth <= 991 ? 6 : 3, cards.length);
+    if (cards.length <= initial) return;
+
+    function show(count) {
+        cards.forEach(function (card, index) { card.hidden = index >= count; });
+    }
+    function sync() {
+        show(initial);
+        if (window.innerWidth <= 991) return;
+        var lastSideItem = side.lastElementChild;
+        if (!lastSideItem) return;
+        var sideEnd = lastSideItem.getBoundingClientRect().bottom;
+        var visible = initial;
+        while (visible < cards.length) {
+            var mainEnd = section.getBoundingClientRect().bottom;
+            if (sideEnd - mainEnd <= 72) break;
+            visible = Math.min(visible + 3, cards.length);
+            show(visible);
+        }
+    }
+
+    var scheduled = false;
+    function schedule() {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () {
+            scheduled = false;
+            sync();
+        });
+    }
+    schedule();
+    window.addEventListener('load', schedule, { once: true });
+    window.addEventListener('resize', schedule, { passive: true });
 })();

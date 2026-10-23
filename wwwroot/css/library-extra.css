@@ -1,9 +1,10 @@
 /* Số bài trên menu header, vd. TIN TỨC (40) */
-.menu-count { font-weight: 400; font-size: .85em; opacity: .8; text-transform: none; }
-.menu .sub .menu-count { color: var(--muted); opacity: 1; }
+.menu-count { display: inline-block; margin-left: 3px; padding: 1px 6px; border-radius: 10px; background: rgba(255,255,255,.18); color: #fff; font-weight: 600; font-size: 11px; line-height: 1.45; opacity: 1; text-transform: none; vertical-align: 1px; }
+.menu .sub .menu-count { background: rgba(255,255,255,.16); color: #fff; }
 
 /* ================= CHẾ ĐỘ TỐI: THƯ VIỆN SỐ ================= */
 [data-theme="dark"] .lib-tree, [data-theme="dark"] .lib-filter { background: var(--surface); border-color: var(--line); border-top-color: var(--red); }
+[data-theme="dark"] .lib-filter input, [data-theme="dark"] .lib-filter select { background: var(--surface-2); color: var(--text); border-color: var(--line); }
 [data-theme="dark"] .lib-tree ul ul { border-left-color: var(--line); }
 [data-theme="dark"] .lib-tree a { color: var(--text); }
 [data-theme="dark"] .lib-tree a:hover { background: var(--surface-2); }

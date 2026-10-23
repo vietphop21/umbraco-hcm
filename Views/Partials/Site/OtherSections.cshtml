@@ -1,0 +1,41 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    var path = Model.Path.Split(',');
+    var others = Model.Sections().Where(s => !path.Contains(s.Node.Id.ToString())).ToList();
+    // Keep uniqueness local to this card grid so images used by the article list
+    // or sidebar do not exhaust the relevant choices and force a repeated fallback.
+    var usedImages = new HashSet<string>();
+}
+@if (others.Any())
+{
+    <section class="container other-sections" aria-labelledby="other-sections-title">
+        <div class="other-sections-head">
+            <div>
+                <span class="other-sections-kicker">@SiteHelpers.T("Tiếp tục khám phá")</span>
+                <h2 id="other-sections-title" class="sec-title line">@SiteHelpers.T("Chuyên mục khác")</h2>
+            </div>
+            <a class="other-sections-all" href="@Model.Root().Url()">@SiteHelpers.T("Về trang chủ") <i class="fa fa-arrow-right"></i></a>
+        </div>
+        <div class="other-section-grid">
+            @foreach (var (info, node) in others)
+            {
+                var lead = node.Items(1).FirstOrDefault();
+                var image = lead?.ContentImage(360, 240, usedImages) ?? node.ContentImage(360, 240, usedImages);
+                var targetUrl = lead?.Url() ?? node.Url();
+                var summary = lead?.Value<string>(Props.Summary);
+                if (string.IsNullOrWhiteSpace(summary)) summary = info.Description;
+                <article class="other-section-card">
+                    <a class="other-section-image" href="@targetUrl" aria-label="@SiteHelpers.T(info.MenuName)">
+                        @if (image != null) { <img src="@image" alt="" loading="lazy" /> }
+                        <span class="other-section-code">@info.Code</span>
+                    </a>
+                    <div class="other-section-copy">
+                        <h3><a href="@node.Url()">@SiteHelpers.T(info.MenuName)</a></h3>
+                        @if (lead != null) { <a class="other-section-lead" href="@lead.Url()">@lead.Name</a> }
+                        <p>@summary</p>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+}

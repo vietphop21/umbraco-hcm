@@ -17,6 +17,8 @@
     var totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)LibrarySettings.PageSize));
     page = Math.Min(page, totalPages);
     var items = all.Skip((page - 1) * LibrarySettings.PageSize).Take(LibrarySettings.PageSize).ToList();
+    var usedImages = new HashSet<string>();
+    ViewData["UsedContentImages"] = usedImages;
 
     string Qs(string? type = null, bool keepType = true)
     {
@@ -137,7 +139,7 @@
 
             @foreach (var x in items)
             {
-                var img = x.Img(360, 240);
+                var img = x.ContentImage(480, 320, usedImages) ?? x.ImgFull(480);
                 var type = x.ContentType.Alias;
                 <article class="lib-item">
                     <a class="thumb" href="@x.Url()">
@@ -159,3 +161,4 @@
         </section>
     </div>
 </div>
+<partial name="Site/OtherSections" />
