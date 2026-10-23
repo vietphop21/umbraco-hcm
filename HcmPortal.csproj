@@ -20,6 +20,8 @@
     <!-- Dữ liệu seed demo (danh sách ảnh Commons, video/mp3 test) cần có trong bản publish -->
     <Content Update="Setup\commons-images.json" CopyToPublishDirectory="PreserveNewest" />
     <None Include="Setup\demo-media\**" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Đưa ảnh tĩnh đã quản lý trong Git vào gói deploy; Umbraco bỏ media khỏi publish mặc định. -->
+    <Content Include="wwwroot\media\**\*" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>

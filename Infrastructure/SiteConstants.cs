@@ -101,7 +101,7 @@ public static class SiteMap
 
 public static class SiteMapCovers
 {
-    public const string Introduction = "/media/eiqnfkok/hanoi-vietnam-interiors-of-ho-chi-minh-museum.jpg";
+    public const string Introduction = "/media/sections/2.1-gioi-thieu-bao-tang-ho-chi-minh.jpg";
     public const string Life = "/media/j3jnagiz/ho-chi-minh-1946.jpg";
     public const string Thought = "/media/0yjf02uo/ho-chi-minh-museum-hanoi-2.jpg";
     public const string Saigon = "/media/zmbjlwqb/h%E1%BB%8Dc-vi%C3%AAn-an-ninh-tham-quan-b%E1%BA%BFn-nh%C3%A0-r%E1%BB%93ng.jpg";
